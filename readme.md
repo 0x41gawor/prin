@@ -104,3 +104,75 @@ RuntimeCmd> table_add interface_mapper set_output_interface 2 => 1
 ```
 
 W Mininet ping juz wtedy działa:
+
+#### Zad 2
+```sh
+p4c --target bmv2 --arch v1model zad2.p4
+```
+```sh
+sudo python3 1sw_demo.py --behavioral-exe=/usr/bin/simple_switch --json zad2.json
+```
+```sh
+python3 runtime_CLI.py --thrift-port 9090
+RuntimeCmd> table_add interface_mapper set_output_interface 1 => 2
+RuntimeCmd> table_add interface_mapper set_output_interface 2 => 1
+RuntimeCLI > table_add port_to_vlan set_vlan_tag 1 => 100
+```
+
+W tym zadaniu jako podstawe wykorzystano plik [zad1.p4]. Dodaną funkcjonalnością będzie dodawanie vlan tag'u na podstawie tablicy.
+
+W tym celu dodano kod do sekcji `headers`:
+```p4
+header ethernet_t {
+    bit<48> dstAddr;
+    bit<48> srcAddr;
+    bit<16> etherType;
+}
+
+header vlan_t {
+    bit<3>  priority;
+    bit<1>  cfi;
+    bit<12> vid; 
+	bit<16> etherType; // To store the original EtherType from the Ethernet header
+}
+
+struct headers {
+    ethernet_t ethernet;
+    vlan_t     vlan;
+}
+```
+
+Zmodyfikowano również parser oraz dodany następujący kod do bloku Ingress:
+
+```p4
+	hdr.vlan.setValid();
+		hdr.vlan.vid = vlan_id;
+		hdr.vlan.priority = 0;
+		hdr.vlan.cfi = 0;
+		hdr.vlan.etherType = hdr.ethernet.etherType; // Save the original EtherType
+		hdr.ethernet.etherType = 0x8100; // Indicate the presence of a VLAN tag
+	}
+
+
+	table port_to_vlan {
+		key = {
+			standard_metadata.ingress_port: exact; // Match on ingress port
+		}
+		actions = {
+			set_vlan_tag;  // Action to set the VLAN ID
+		}
+		size = 256; // Adjust size as necessary
+ 	}	
+```
+
+
+Test wygląda tak samo jak w zadaniu 1 z tymże dodatkowo uruchamiamy `tcpdump`, aby potem obejrzec pakiety w Wireshark:
+```sh
+sudo tcpdump -i s1-eth2 -w capture.pcap -v
+wireshark capture.pcap
+```
+
+W Wireshark widac pierwszy złapany pakiet (akurat ARP) a wnim obecny między innymi VLAN TAG ID.
+![](img/1.png)
+
+//TODO jutro literówki i linki do plików popraw ez.
