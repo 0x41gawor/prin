@@ -90,7 +90,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "zad1.p4",
-        "line" : 93,
+        "line" : 103,
         "column" : 8,
         "source_fragment" : "MyDeparser"
       },
@@ -105,35 +105,20 @@
   "learn_lists" : [],
   "actions" : [
     {
-      "name" : "zad1l57",
+      "name" : "NoAction",
       "id" : 0,
       "runtime_data" : [],
-      "primitives" : [
-        {
-          "op" : "assign",
-          "parameters" : [
-            {
-              "type" : "field",
-              "value" : ["standard_metadata", "egress_spec"]
-            },
-            {
-              "type" : "hexstr",
-              "value" : "0x0002"
-            }
-          ],
-          "source_info" : {
-            "filename" : "zad1.p4",
-            "line" : 57,
-            "column" : 12,
-            "source_fragment" : "standard_metadata.egress_spec = 2"
-          }
-        }
-      ]
+      "primitives" : []
     },
     {
-      "name" : "zad1l59",
+      "name" : "MyIngress.set_output_interface",
       "id" : 1,
-      "runtime_data" : [],
+      "runtime_data" : [
+        {
+          "name" : "out_port",
+          "bitwidth" : 9
+        }
+      ],
       "primitives" : [
         {
           "op" : "assign",
@@ -143,15 +128,15 @@
               "value" : ["standard_metadata", "egress_spec"]
             },
             {
-              "type" : "hexstr",
-              "value" : "0x0001"
+              "type" : "runtime_data",
+              "value" : 0
             }
           ],
           "source_info" : {
             "filename" : "zad1.p4",
-            "line" : 59,
-            "column" : 12,
-            "source_fragment" : "standard_metadata.egress_spec = 1"
+            "line" : 54,
+            "column" : 3,
+            "source_fragment" : "standard_metadata.egress_spec = out_port"
           }
         }
       ]
@@ -163,133 +148,59 @@
       "id" : 0,
       "source_info" : {
         "filename" : "zad1.p4",
-        "line" : 50,
+        "line" : 49,
         "column" : 8,
         "source_fragment" : "MyIngress"
       },
-      "init_table" : "node_2",
+      "init_table" : "MyIngress.interface_mapper",
       "tables" : [
         {
-          "name" : "tbl_zad1l57",
+          "name" : "MyIngress.interface_mapper",
           "id" : 0,
           "source_info" : {
             "filename" : "zad1.p4",
             "line" : 57,
-            "column" : 42,
-            "source_fragment" : "="
+            "column" : 7,
+            "source_fragment" : "interface_mapper"
           },
-          "key" : [],
+          "key" : [
+            {
+              "match_type" : "exact",
+              "name" : "standard_metadata.ingress_port",
+              "target" : ["standard_metadata", "ingress_port"],
+              "mask" : null
+            }
+          ],
           "match_type" : "exact",
           "type" : "simple",
-          "max_size" : 1024,
+          "max_size" : 256,
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [0],
-          "actions" : ["zad1l57"],
+          "action_ids" : [1, 0],
+          "actions" : ["MyIngress.set_output_interface", "NoAction"],
           "base_default_next" : null,
           "next_tables" : {
-            "zad1l57" : null
+            "MyIngress.set_output_interface" : null,
+            "NoAction" : null
           },
           "default_entry" : {
             "action_id" : 0,
-            "action_const" : true,
+            "action_const" : false,
             "action_data" : [],
-            "action_entry_const" : true
-          }
-        },
-        {
-          "name" : "tbl_zad1l59",
-          "id" : 1,
-          "source_info" : {
-            "filename" : "zad1.p4",
-            "line" : 59,
-            "column" : 42,
-            "source_fragment" : "="
-          },
-          "key" : [],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [1],
-          "actions" : ["zad1l59"],
-          "base_default_next" : null,
-          "next_tables" : {
-            "zad1l59" : null
-          },
-          "default_entry" : {
-            "action_id" : 1,
-            "action_const" : true,
-            "action_data" : [],
-            "action_entry_const" : true
+            "action_entry_const" : false
           }
         }
       ],
       "action_profiles" : [],
-      "conditionals" : [
-        {
-          "name" : "node_2",
-          "id" : 0,
-          "source_info" : {
-            "filename" : "zad1.p4",
-            "line" : 56,
-            "column" : 6,
-            "source_fragment" : "standard_metadata.ingress_port == 1"
-          },
-          "expression" : {
-            "type" : "expression",
-            "value" : {
-              "op" : "==",
-              "left" : {
-                "type" : "field",
-                "value" : ["standard_metadata", "ingress_port"]
-              },
-              "right" : {
-                "type" : "hexstr",
-                "value" : "0x0001"
-              }
-            }
-          },
-          "true_next" : "tbl_zad1l57",
-          "false_next" : "node_4"
-        },
-        {
-          "name" : "node_4",
-          "id" : 1,
-          "source_info" : {
-            "filename" : "zad1.p4",
-            "line" : 58,
-            "column" : 19,
-            "source_fragment" : "standard_metadata.ingress_port == 2"
-          },
-          "expression" : {
-            "type" : "expression",
-            "value" : {
-              "op" : "==",
-              "left" : {
-                "type" : "field",
-                "value" : ["standard_metadata", "ingress_port"]
-              },
-              "right" : {
-                "type" : "hexstr",
-                "value" : "0x0002"
-              }
-            }
-          },
-          "false_next" : null,
-          "true_next" : "tbl_zad1l59"
-        }
-      ]
+      "conditionals" : []
     },
     {
       "name" : "egress",
       "id" : 1,
       "source_info" : {
         "filename" : "zad1.p4",
-        "line" : 68,
+        "line" : 78,
         "column" : 8,
         "source_fragment" : "MyEgress"
       },

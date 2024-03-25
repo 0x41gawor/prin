@@ -50,14 +50,13 @@ control MyIngress(inout headers hdr,
 }
 ```
 
-
 Jednakże to proste rozwiązanie nie jest w żaden sposób skalowane, posłużyło jedynie jako test środowiska developerskiego.
 ```sh
-p4c --target bmv2 --arch v1model zad1.archived.p4
+p4c --target bmv2 --arch v1model zad1.p4
 ```
 
 ```sh
-sudo python3 1sw_demo.py --behavioral-exe=/usr/bin/simple_switch --json zad1.archived.json
+sudo python3 1sw_demo.py --behavioral-exe=/usr/bin/simple_switch --json zad1.json
 ```
 
 Bardziej ogólne rozwiązanie tzn. takie, które pozwala, aby w topologii sieci było więcej niż dwa hosty korzysta z tablic.
@@ -65,3 +64,43 @@ Bardziej ogólne rozwiązanie tzn. takie, które pozwala, aby w topologii sieci 
 Tablice pozwolą na to, aby zapisywać w nich mapowania, mówiące o tym na który interfejs wyjściowy kierowac pakiet, gdy wejdzie na dany port wejściowy. 
 
 
+Względem [template.p4](template.p4) należy zmodyfikować jedynie blok `MyIngress`.
+```p4
+control MyIngress(inout headers hdr,
+                  inout metadata meta,
+                  inout standard_metadata_t standard_metadata) 
+{
+	// zdefiniowanie akcji, ktora ustawia port wyjsciowy na taki jaki jest na wejsciu akcji
+	action set_output_interface(bit<9> out_port) {
+ 		standard_metadata.egress_spec = out_port;
+	}
+	// ta tablea "mapuje interfejsy/porty" - stąd jej nazwa
+	// kluczem do przeszukiwania wpisów jest port wejściowy, dopasowanie ma byc typu 'exact'(identyczne)
+	// akcje to albo set_output_interface zdefiniowane wyzej, albo brak akcji w przypadku braku dopasowania
+	// rozmiar to 256 wspisów, tyle ile 1 bajt pozwala
+	table interface_mapper {
+		key = {
+			standard_metadata.ingress_port: exact;
+		}
+		actions = {
+			set_output_interface;
+			NoAction;
+		}
+		size = 256; // Correctly specify the size outside of the actions block
+	}
+
+	apply 
+	{	
+		interface_mapper.apply();
+	}
+}
+```
+
+Nasŧepnie uruchomic CLI do control plane switcha i dodac odpowiedni wpisy do tabeli:
+```sh
+python3 runtime_CLI.py --thrift-port 9090
+RuntimeCmd> table_add interface_mapper set_output_interface 1 => 2
+RuntimeCmd> table_add interface_mapper set_output_interface 2 => 1
+```
+
+W Mininet ping juz wtedy działa:
