@@ -1,4 +1,5 @@
 # Lab 3
+Autor: Andrzej Gawor
 ## Poczynione kroki
 ### 1. Przygotowanie
 - Instalacja kompilatora P4
@@ -15,18 +16,17 @@ p4c --target bmv2 --arch v1model template.p4
 ```sh
 sudo python3 1sw_demo.py --behavioral-exe=/usr/bin/simple_switch --json template.json
 ```
-Skrypt ten uruchomia Mininet CLI i w nim mozna wykonać debugging (ale jeszcze nie wiem jak). Ping test między hostami nie działa, tak jak oczekiwano.
+Skrypt ten uruchomia Mininet CLI i w nim mozna wykonać debugging. Ping test między hostami nie działa, tak jak oczekiwano.
 
-Note: Na wszelki wypadek nalezy wykonać
+Note: Po wyłączeniu mininet na wszelki wypadek warto wykonać.
 ```sh
 sudo mn -c
 ```
 ### 2. Development programu P4
 Zadania z instrukcji podzieliłem następująco:
-- Przekazywania pakietów między interfejsami -->    **Zad1**
-- Dodawania lub usuwania tagu VLAN           -->    **Zad2**
+- Przekazywanie pakietów między interfejsami -->    **Zad1**
+- Dodawanie lub usuwanie tagu VLAN           -->    **Zad2**
 #### Zad 1
-Switch ma dwa interfejsy `eth1` i `eth2`.
 
 W topologii są jedynie dwa hosty, switch ma tylko dwa interfejsy dlatego najprostszym rozwiązaniem bedzie zaprogramowanie tak switcha, aby pakiety z `eth1` były przekazywane na `eth2` i na odwrót.
 
@@ -50,7 +50,8 @@ control MyIngress(inout headers hdr,
 }
 ```
 
-Jednakże to proste rozwiązanie nie jest w żaden sposób skalowane, posłużyło jedynie jako test środowiska developerskiego.
+Jednakże to proste rozwiązanie nie jest w żaden sposób skalowane, posłużyło jedynie jako test środowiska developerskiego*
+> *Taki test przed rozpoczęciem programowania okazał się bardzo przydatny, wykryto, że plik [1sw_demo.py](1sw_demo.py) definiuje taką topologię sieci, w której pingi między hostami nie działają, gdyż są one w innych podsieciach.
 ```sh
 p4c --target bmv2 --arch v1model zad1.p4
 ```
@@ -61,7 +62,7 @@ sudo python3 1sw_demo.py --behavioral-exe=/usr/bin/simple_switch --json zad1.jso
 
 Bardziej ogólne rozwiązanie tzn. takie, które pozwala, aby w topologii sieci było więcej niż dwa hosty korzysta z tablic.
 
-Tablice pozwolą na to, aby zapisywać w nich mapowania, mówiące o tym na który interfejs wyjściowy kierowac pakiet, gdy wejdzie na dany port wejściowy. 
+Tablice pozwolą na to, aby zapisywać w nich mapowania, mówiące o tym, na który interfejs wyjściowy kierować pakiet, gdy wejdzie na dany port wejściowy. 
 
 
 Względem [template.p4](template.p4) należy zmodyfikować jedynie blok `MyIngress`.
@@ -119,7 +120,7 @@ RuntimeCmd> table_add interface_mapper set_output_interface 2 => 1
 RuntimeCLI > table_add port_to_vlan set_vlan_tag 1 => 100
 ```
 
-W tym zadaniu jako podstawe wykorzystano plik [zad1.p4]. Dodaną funkcjonalnością będzie dodawanie vlan tag'u na podstawie tablicy.
+W tym zadaniu jako podstawę wykorzystano plik [zad1.p4]. Dodaną funkcjonalnością będzie dodawanie vlan tag'u na podstawie tablicy.
 
 W tym celu dodano kod do sekcji `headers`:
 ```p4
@@ -142,7 +143,7 @@ struct headers {
 }
 ```
 
-Zmodyfikowano również parser oraz dodany następujący kod do bloku Ingress:
+Zmodyfikowano również parser (i deparser) oraz dodany następujący kod do bloku Ingress:
 
 ```p4
 	hdr.vlan.setValid();
@@ -165,7 +166,6 @@ Zmodyfikowano również parser oraz dodany następujący kod do bloku Ingress:
  	}	
 ```
 
-
 Test wygląda tak samo jak w zadaniu 1 z tymże dodatkowo uruchamiamy `tcpdump`, aby potem obejrzec pakiety w Wireshark:
 ```sh
 sudo tcpdump -i s1-eth2 -w capture.pcap -v
@@ -174,5 +174,3 @@ wireshark capture.pcap
 
 W Wireshark widac pierwszy złapany pakiet (akurat ARP) a wnim obecny między innymi VLAN TAG ID.
 ![](img/1.png)
-
-//TODO jutro literówki i linki do plików popraw ez.

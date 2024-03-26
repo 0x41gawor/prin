@@ -34,7 +34,6 @@ Typy danych są.
 
 uzywaj bit<N>, nie uzywaj int w header, error (to chyba enum na errory z Parsera) no i typedef mozesz sobie uzywac.
 
-
 Bloki kontrolne trzeba wprost powiedziec kompilatorowi co jest co.
 
 # tabele
