@@ -82,7 +82,7 @@ Router ma zbierac statystyki dotyczące ...(lista poniżej). User za pomocą Tri
 - Dla każdego portu liczba pakietów
 	- odebranych
 	- przeslanych dalej
-	- wyslnaych
+	- wysłanych
 - Dla całego switcha
 	- liczba pakietów odrzuconych
 
@@ -245,6 +245,48 @@ p4c --target bmv2 --arch v1model printler.p4
 sudo python3 1sw_demo.py --behavioral-exe=/usr/bin/simple_switch --json printler.json
 ```
 #### 2.3.2 Zmiany w kodzie
+Dodanie nowych nagłówków:
+```p4
+
+header tcp_t {
+    bit<16> srcPort;
+    bit<16> dstPort;
+}
+
+header udp_t {
+    bit<16> srcPort;
+    bit<16> dstPort;
+}
+
+
+struct headers {
+    ethernet_t ethernet;
+    ipv4_t ipv4;
+	tcp_t tcp;
+    udp_t udp;
+}
+```
+oraz uwzględnienie ich w parserze (brak zamieszczonego kodu).
+
+Zdefiniownie nowej tabeli w bloku MyIngress:
+```p4
+table ip_filter {
+		key = {
+			hdr.ipv4.dstAddr: exact;
+			hdr.tcp.dstPort: exact; // or hdr.udp.dstPort depending on the protocol
+		}
+		actions = {
+			NoAction;
+		}
+		size = 256; // Adjust size based on your needs
+		default_action = NoAction(); // Default action is to do nothing (allow packet)
+	}
+```
+
+Oraz zastosowanie tej tabeli w bloku `apply`. Tu kluczowe jest aby odpowiednio ustawic logikę wyrazeń warunkowych, ponieważ w P4 nie ma czegoś takiego jak explicite dropping pakietów tylko po prostu nie podanie im informacji o rutingu. Należy zadbać, więc aby obsługa każdego przypadku była rozłączna.
+
+Na koniec również zaktualizowano odpowiednio Deparser.
+
 
 #### 2.3.3 Testy
 Dodanie wpisu do tabeli (nalezy pamietac ze wpisy z IP Router nadal obowiązują)
@@ -309,3 +351,70 @@ Funkcjonalność, którą w sekcji 1.2.2 nazwałem "Wildcards" celowo pomijam.
 Kod powstały w tej części archiwizuje jako [printler.post-ipfilter.p4](printler.post-ipfilter.p4)
 
 ### 2.4 IP Stats
+#### 2.4.1 Rozbicie problemu
+- Dla każdego portu liczba pakietów
+	- odebranych
+	- przeslanych dalej
+	- wysłanych
+- Dla całego switcha
+	- liczba pakietów odrzuconych
+
+Należy zastanowić się, w którym miejscu w kodzie P4 należy zwiekszać countery. 
+
+- Pakiety odebrane można zliczać na początku bloku Ingress. 
+- Pakiety wyslane można zliczać na początku bloku Egress.
+- Pakiety przesłane dalej można zliczać według dopasowań w tabeli `ip_routing`
+- Liczba pakietów odrzuconych jest determinowana przez filter
+
+
+#### 2.4.2 Zmiany w kodzie
+**Pakiety odebrane**
+Do bloku `MyIngress` na sam początek należy dodać deklarację countera:
+```p4
+counter(64, CounterType.packets) packets_received;
+```
+Następnie w tym samym bloku w `apply` na samym początku:
+```p4
+packets_received.count((bit<32>) standard_metadata.ingress_port);
+```
+**Pakiety wysłane**
+Do bloku `MyEgress` na sam początek należy dodać deklarację countera:
+```p4
+counter(64, CounterType.packets) packets_sent;
+```
+Następnie w tym samym bloku w `apply` na samym początku:
+```p4
+packets_sent.count((bit<32>) standard_metadata.ingress_port);
+```
+**Pakiety przekazane dalej**
+Tu już użyjemy Direct Counter.
+
+Deklaracja w bloku Ingress:
+```p4
+direct_counter(CounterType.packets) packets_forwarded;
+```
+Następnie należy przypisać ten counter jako atrybut tablicy `ip_routing`.
+```p4
+table ip_routing {
+        key = {
+            hdr.ipv4.dstAddr : lpm;
+        }
+        actions = {
+            forward;
+            NoAction;
+        }
+        counters = packets_forwarded;
+        size = 1024;
+        default_action = NoAction();
+    }
+```
+**Pakiety odrzucone**
+Celowo pomijam.
+#### 2.4.3 Testy
+Aby odczytać wartości counter w RuntimeCmd należy użyć komend.
+```sh
+python3 runtime_CLI.py
+RuntimeCmd: counter_read packets_received
+RuntimeCmd: counter_read packets_sent
+```
+Nie udało mi się znależć info jak odczytać direct_counter.

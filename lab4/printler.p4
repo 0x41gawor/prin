@@ -114,11 +114,13 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
+    counter(64, CounterType.packets) packets_received;
+    direct_counter(CounterType.packets) packets_forwarded;
+
     action forward(bit<9> egress_port, bit<48> new_dst_mac) {
   	  	standard_metadata.egress_spec = egress_port;
     	hdr.ethernet.dstAddr = new_dst_mac;
 	}
-
 
     table ip_routing {
         key = {
@@ -128,6 +130,7 @@ control MyIngress(inout headers hdr,
             forward;
             NoAction;
         }
+        counters = packets_forwarded;
         size = 1024;
         default_action = NoAction();
     }
@@ -146,6 +149,8 @@ control MyIngress(inout headers hdr,
 
 
     apply {
+        packets_received.count((bit<32>) standard_metadata.ingress_port);
+
 		if (hdr.tcp.isValid() || hdr.udp.isValid()) {
             ip_filter.apply();
         }
@@ -171,8 +176,10 @@ control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata)
 {
+    counter(64, CounterType.packets) packets_sent;
 	apply
 	{
+        packets_sent.count((bit<32>) standard_metadata.ingress_port);
 	}
 }
 
