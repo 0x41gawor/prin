@@ -1,4 +1,3 @@
-# Printer -  Simple IP router 
 <h1 align="center">PRINtler</h1>
 
 <p align="center">
