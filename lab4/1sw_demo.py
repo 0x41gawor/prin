@@ -55,19 +55,12 @@ class SingleSwitchTopo(Topo):
                                 pcap_dump = pcap_dump,
                                 enable_debugger = enable_debugger)
 
-
-        # Host 1
-        host1 = self.addHost('h1',
-                     ip='10.0.1.1/24',
-                     mac='00:00:00:00:00:AA')
-        self.addLink(host1, switch)
-
-        # Host 2
-        host2 = self.addHost('h2',
-                     ip='10.0.2.1/24',
-                     mac='00:00:00:00:00:BB')
-        self.addLink(host2, switch)
-
+        for h in range(n):
+            host = self.addHost('h%d' % (h + 1),
+                                ip = "10.0.%d.10/24" % h,
+                                mac = '00:04:00:00:00:%02x' %h)
+            self.addLink(host, switch)
+        
 
 def main():
     num_hosts = args.num_hosts
@@ -86,9 +79,9 @@ def main():
     net.start()
 
 
-    sw_mac = ["00:00:00:00:00:A1", "00:00:00:00:00:B1"]
+    sw_mac = ["00:aa:bb:00:00:%02x" % n for n in range(num_hosts)]
 
-    sw_addr = ["10.0.%d.2" % n for n in range(num_hosts)]
+    sw_addr = ["10.0.%d.1" % n for n in range(num_hosts)]
 
     for n in range(num_hosts):
         h = net.get('h%d' % (n + 1))

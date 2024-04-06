@@ -115,5 +115,118 @@ Zakres funkcjonalny programu podzieliłem na 3 części/moduły:
 - Stats 
 Ich opis znajduje się w sekcji 1.
 
+### 2.2 IP Router
+#### 2.2.1 Komendy potrzebne do debugowania
+```sh
+p4c --target bmv2 --arch v1model printler.p4
+```
+
+```sh
+sudo python3 1sw_demo.py --behavioral-exe=/usr/bin/simple_switch --json printler.json
+```
+#### 2.2.2 Zmiany w kodzie
+Opisane zmiany występują względem pliku referencyjnego jakim jest [template.p4](template.p4)
+
+Po pierwsze zdefiniowano odpowiednie nagłówki:
+```p4
+header ethernet_t {
+    bit<48> dstAddr;
+    bit<48> srcAddr;
+    bit<16> etherType;
+}
+
+header ipv4_t {
+    bit<4>  version;
+    bit<4>  ihl;
+    bit<8>  diffserv;
+    bit<16> totalLen;
+    bit<16> identification;
+    bit<3>  flags;
+    bit<13> fragOffset;
+    bit<8>  ttl;
+    bit<8>  protocol;
+    bit<16> hdrChecksum;
+    bit<32> srcAddr;
+    bit<32> dstAddr;
+}
+
+struct headers {
+    ethernet_t ethernet;
+    ipv4_t ipv4;
+}
+```
+Adekwatnie zmieniono również parser.
+
+W bloku `MyIngress` dodano:
+- akcję `forward` kierującą dany pakiet na zadany port i podmieniającą docelowy adres MAC
+- tabelę, której kluczem jest adres IP i korzysta ona z akcji `forward`
+
+```p4
+control MyIngress(inout headers hdr,
+                  inout metadata meta,
+                  inout standard_metadata_t standard_metadata) {
+
+    action forward(bit<9> egress_port, bit<48> new_dst_mac) {
+  	  	standard_metadata.egress_spec = egress_port;
+    	hdr.ethernet.dstAddr = new_dst_mac;
+	}
 
 
+    table ip_routing {
+        key = {
+            hdr.ipv4.dstAddr : lpm;
+        }
+        actions = {
+            forward;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+
+    apply {
+        ip_routing.apply();
+    }
+}
+```
+
+Dodatkowo aby odrzucać pakiety z TTL mniejszym niż 2 musimy dodać blok warunkowy w bloku `MyIngress.apply`:
+```p4
+apply {
+        // Check if the packet is an IPv4 packet and if the TTL is less than 2
+        if(hdr.ipv4.isValid() && hdr.ipv4.ttl < 2) {
+            drop(); // Drop the packet
+        } else {
+            // Proceed with IP routing
+            ip_routing.apply();
+        }
+    }
+```
+
+
+Na koniec należy również obliczyć na nową sumę kontrolną z racji modyfikacji w pakiecie:
+```p4
+control MyComputeChecksum(inout headers hdr, inout metadata meta) {
+    apply {
+        update_checksum(
+            hdr.ipv4.isValid(),
+            { hdr.ipv4.version, hdr.ipv4.ihl, hdr.ipv4.diffserv, hdr.ipv4.totalLen,
+              hdr.ipv4.identification, hdr.ipv4.flags, hdr.ipv4.fragOffset, hdr.ipv4.ttl,
+              hdr.ipv4.protocol, hdr.ipv4.srcAddr, hdr.ipv4.dstAddr },
+            hdr.ipv4.hdrChecksum,
+            HashAlgorithm.csum16
+        );
+    }
+}
+```
+
+
+#### 2.2.3 Test
+Aby przetestować routing za pomoca RuntimeCLI należy dodac nastepujace wpisy (wynikaja one z zalozonej topologii)
+```sh
+python3 runtime_CLI.py --thrift-port 9090
+table_add ip_routing forward 10.0.1.10/32 => 2 0x000400000001
+table_add ip_routing forward 10.0.0.10/32 => 1 0x000400000000
+```
+Aby wykonać test czy pakiety z TTL < 2, należy ustawić na którymś z hostów odpowiednią regułę do iptables:
+```sh
