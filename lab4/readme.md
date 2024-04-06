@@ -2,7 +2,7 @@
 <h1 align="center">PRINtler</h1>
 
 <p align="center">
-  <img src="img/logo.png"/>
+  <img src="img/logo.png" width=250/>
   <br>
   <i>PRINtler a simple IP router for PRIN course on WUT</i>
   <br>
@@ -49,14 +49,14 @@ Jesli bedzie bledna to host odrzuci.
 
 ### 1.2 IP Filter
 #### 1.2.1 Opis
-Use wpisuje do tabeli wpis, który reprezentuje trójkę, która identyfikuje pakiet jaki należy odrzucać. Ta trójka to:
+Use wpisuje do tabeli wpis, który reprezentuje trójkę, która identyfikuje pakiety jakie należy odrzucać. Ta trójka to:
 - docelowy adres IP
 - protokół warstwy transportowej
 - port
 
 np. `{10.0.0.1, TCP. 80}`
 
-ale moze też być wildcard czyli np. `{10.0.0.1, TCP, *}` to tego będzie Ci potrzebny ten ternary operator.
+ale moze też być wildcard czyli np. `{10.0.0.1, TCP, *}`, do tego będzie Ci potrzebny ten ternary operator.
 #### 1.2.2 Reqs
 - [ ] Basic filter
 - [ ] Wildcards
@@ -228,5 +228,81 @@ python3 runtime_CLI.py --thrift-port 9090
 table_add ip_routing forward 10.0.1.10/32 => 2 0x000400000001
 table_add ip_routing forward 10.0.0.10/32 => 1 0x000400000000
 ```
-Aby wykonać test czy pakiety z TTL < 2, należy ustawić na którymś z hostów odpowiednią regułę do iptables:
+Aby wykonać test czy pakiety z TTL < 2 są odrzucane, należy ustawić na którymś z hostów odpowiednią regułę do iptables:
 ```sh
+h1 sudo iptables -t mangle -A POSTROUTING -j TTL --ttl-set 1
+```
+Rzeczywiście, ping między h1 a h2 po wykonaniu tej komendy w Mininet CLI nie działa.
+
+Kod powstały w tej części archiwizuje pod postacią pliku: [printler.post-iprouter.p4](printler.post-iprouter.p4).
+
+### 2.3 IP Filter
+#### 2.3.1 Komendy potrzebne do debugowania
+```sh
+p4c --target bmv2 --arch v1model printler.p4
+```
+
+```sh
+sudo python3 1sw_demo.py --behavioral-exe=/usr/bin/simple_switch --json printler.json
+```
+#### 2.3.2 Zmiany w kodzie
+
+#### 2.3.3 Testy
+Dodanie wpisu do tabeli (nalezy pamietac ze wpisy z IP Router nadal obowiązują)
+```sh
+python3 runtime_CLI.py --thrift-port 9090
+table_add ip_routing forward 10.0.1.10/32 => 2 0x000400000001
+table_add ip_routing forward 10.0.0.10/32 => 1 0x000400000000
+table_add ip_filter NoAction 10.0.1.10 80 =>
+```
+
+Aby wygenerować pakiet z odpowiednim adresem i portem tcp używam programu `nc`:
+```sh
+MininetCLI> h1 echo "Hello" | nc 10.0.1.10 80
+```
+Powyższa komenda wyśle pakiet TCP na adres `10.0.1.10` i port `80`.
+
+**Przebieg testu**
+Należy otworzyc sobie 4 terminale.
+
+Chronologiczny opis komend:
+
+Uruchomienie sieci
+```sh
+Terminal 1> sudo python3 1sw_demo.py --behavioral-exe=/usr/bin/simple_switch --json printler.json
+```
+
+Dodanie wpisów IP routingu:
+```sh
+Terminal 2> python3 runtime_CLI.py --thrift-port 9090
+Terminal 2> table_add ip_routing forward 10.0.1.10/32 => 2 0x000400000001
+Terminal 2> table_add ip_routing forward 10.0.0.10/32 => 1 0x000400000000
+```
+
+Uruchomienie monitoringu na interfejsach switcha
+```sh
+Terminal 3> sudo tcpdump -i s1-eth1
+Terminal 4> sudo tcpdump -i s1-eth2
+```
+
+Sprwadzenie komunikacji przed dodaniem wpisu Trift
+```sh
+Terminal 1> h1 echo "Hello" | nc 10.0.1.10 80
+```
+Teraz należy obserwować co się dzieję na terminalach 3 i 4.
+
+Dodanie wpisu Trift
+```sh
+Terminal 2> table_add ip_filter NoAction 10.0.1.10 80 =>
+```
+
+Sprawdzenie komunikacji po dodaniu wpisu Trift:
+```sh
+Terminal 1> h1 echo "Hello" | nc 10.0.1.10 80
+```
+Teraz należy obserwować co się dzieję na terminalach 3 i 4.
+
+Jak widać i jak się spodziewano po dodaniu wpisu ruch na terminalu 4 jest zerowy.
+
+
+Funkcjonalność, którą w sekcji 1.2.2 nazwałem "Wildcards" celowo pomijam.

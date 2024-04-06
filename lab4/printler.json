@@ -54,6 +54,22 @@
         ["srcAddr", 32, false],
         ["dstAddr", 32, false]
       ]
+    },
+    {
+      "name" : "tcp_t",
+      "id" : 4,
+      "fields" : [
+        ["srcPort", 16, false],
+        ["dstPort", 16, false]
+      ]
+    },
+    {
+      "name" : "udp_t",
+      "id" : 5,
+      "fields" : [
+        ["srcPort", 16, false],
+        ["dstPort", 16, false]
+      ]
     }
   ],
   "headers" : [
@@ -82,6 +98,20 @@
       "name" : "ipv4",
       "id" : 3,
       "header_type" : "ipv4_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "tcp",
+      "id" : 4,
+      "header_type" : "tcp_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "udp",
+      "id" : 5,
+      "header_type" : "udp_t",
       "metadata" : false,
       "pi_omit" : true
     }
@@ -158,6 +188,71 @@
           ],
           "transitions" : [
             {
+              "type" : "hexstr",
+              "value" : "0x06",
+              "mask" : null,
+              "next_state" : "parse_tcp"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x11",
+              "mask" : null,
+              "next_state" : "parse_udp"
+            },
+            {
+              "type" : "default",
+              "value" : null,
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["ipv4", "protocol"]
+            }
+          ]
+        },
+        {
+          "name" : "parse_tcp",
+          "id" : 2,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "tcp"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "type" : "default",
+              "value" : null,
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : []
+        },
+        {
+          "name" : "parse_udp",
+          "id" : 3,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "udp"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
               "type" : "default",
               "value" : null,
               "mask" : null,
@@ -176,11 +271,11 @@
       "id" : 0,
       "source_info" : {
         "filename" : "printler.p4",
-        "line" : 156,
+        "line" : 202,
         "column" : 8,
         "source_fragment" : "MyDeparser"
       },
-      "order" : ["ethernet", "ipv4"],
+      "order" : ["ethernet", "ipv4", "tcp", "udp"],
       "primitives" : []
     }
   ],
@@ -193,7 +288,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "printler.p4",
-        "line" : 139,
+        "line" : 185,
         "column" : 8,
         "source_fragment" : "update_checksum( ..."
       },
@@ -261,8 +356,14 @@
       "primitives" : []
     },
     {
-      "name" : "MyIngress.forward",
+      "name" : "NoAction",
       "id" : 2,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "MyIngress.forward",
+      "id" : 3,
       "runtime_data" : [
         {
           "name" : "egress_port",
@@ -288,7 +389,7 @@
           ],
           "source_info" : {
             "filename" : "printler.p4",
-            "line" : 91,
+            "line" : 118,
             "column" : 6,
             "source_fragment" : "standard_metadata.egress_spec = egress_port"
           }
@@ -307,7 +408,7 @@
           ],
           "source_info" : {
             "filename" : "printler.p4",
-            "line" : 92,
+            "line" : 119,
             "column" : 5,
             "source_fragment" : "hdr.ethernet.dstAddr = new_dst_mac"
           }
@@ -321,25 +422,38 @@
       "id" : 0,
       "source_info" : {
         "filename" : "printler.p4",
-        "line" : 86,
+        "line" : 113,
         "column" : 8,
         "source_fragment" : "MyIngress"
       },
       "init_table" : "node_2",
       "tables" : [
         {
-          "name" : "tbl_NoAction",
+          "name" : "MyIngress.ip_filter",
           "id" : 0,
           "source_info" : {
             "filename" : "printler.p4",
-            "line" : 111,
-            "column" : 12,
-            "source_fragment" : "NoAction()"
+            "line" : 135,
+            "column" : 7,
+            "source_fragment" : "ip_filter"
           },
-          "key" : [],
+          "key" : [
+            {
+              "match_type" : "exact",
+              "name" : "hdr.ipv4.dstAddr",
+              "target" : ["ipv4", "dstAddr"],
+              "mask" : null
+            },
+            {
+              "match_type" : "exact",
+              "name" : "hdr.tcp.dstPort",
+              "target" : ["tcp", "dstPort"],
+              "mask" : null
+            }
+          ],
           "match_type" : "exact",
           "type" : "simple",
-          "max_size" : 1024,
+          "max_size" : 256,
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
@@ -351,6 +465,35 @@
           },
           "default_entry" : {
             "action_id" : 1,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        },
+        {
+          "name" : "tbl_NoAction",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "printler.p4",
+            "line" : 155,
+            "column" : 16,
+            "source_fragment" : "NoAction()"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [2],
+          "actions" : ["NoAction"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "NoAction" : null
+          },
+          "default_entry" : {
+            "action_id" : 2,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -358,10 +501,10 @@
         },
         {
           "name" : "MyIngress.ip_routing",
-          "id" : 1,
+          "id" : 2,
           "source_info" : {
             "filename" : "printler.p4",
-            "line" : 96,
+            "line" : 123,
             "column" : 10,
             "source_fragment" : "ip_routing"
           },
@@ -379,7 +522,7 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [2, 0],
+          "action_ids" : [3, 0],
           "actions" : ["MyIngress.forward", "NoAction"],
           "base_default_next" : null,
           "next_tables" : {
@@ -401,8 +544,48 @@
           "id" : 0,
           "source_info" : {
             "filename" : "printler.p4",
-            "line" : 110,
-            "column" : 11,
+            "line" : 149,
+            "column" : 6,
+            "source_fragment" : "hdr.tcp.isValid() || hdr.udp.isValid()"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "or",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["tcp", "$valid$"]
+                  }
+                }
+              },
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["udp", "$valid$"]
+                  }
+                }
+              }
+            }
+          },
+          "true_next" : "MyIngress.ip_filter",
+          "false_next" : "node_4"
+        },
+        {
+          "name" : "node_4",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "printler.p4",
+            "line" : 154,
+            "column" : 15,
             "source_fragment" : "hdr.ipv4.isValid() && hdr.ipv4.ttl < 2"
           },
           "expression" : {
@@ -446,7 +629,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "printler.p4",
-        "line" : 124,
+        "line" : 170,
         "column" : 8,
         "source_fragment" : "MyEgress"
       },
@@ -462,7 +645,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "printler.p4",
-        "line" : 139,
+        "line" : 185,
         "column" : 8,
         "source_fragment" : "update_checksum( ..."
       },

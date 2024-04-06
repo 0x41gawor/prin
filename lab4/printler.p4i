@@ -911,9 +911,22 @@ header ipv4_t {
     bit<32> dstAddr;
 }
 
+header tcp_t {
+    bit<16> srcPort;
+    bit<16> dstPort;
+}
+
+header udp_t {
+    bit<16> srcPort;
+    bit<16> dstPort;
+}
+
+
 struct headers {
     ethernet_t ethernet;
     ipv4_t ipv4;
+ tcp_t tcp;
+    udp_t udp;
 }
 
 
@@ -944,8 +957,22 @@ parser MyParser(packet_in packet,
 
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
-        transition accept;
+        transition select(hdr.ipv4.protocol) {
+   6: parse_tcp; // TCP protocol number
+   17: parse_udp; // UDP protocol number
+   default: accept;
+     }
     }
+
+ state parse_tcp {
+  packet.extract(hdr.tcp);
+  transition accept;
+ }
+
+ state parse_udp {
+  packet.extract(hdr.udp);
+  transition accept;
+ }
 }
 
 
@@ -988,13 +1015,32 @@ control MyIngress(inout headers hdr,
         default_action = NoAction();
     }
 
+ table ip_filter {
+  key = {
+   hdr.ipv4.dstAddr: exact;
+   hdr.tcp.dstPort: exact; // or hdr.udp.dstPort depending on the protocol
+  }
+  actions = {
+   NoAction;
+  }
+  size = 256; // Adjust size based on your needs
+  default_action = NoAction(); // Default action is to do nothing (allow packet)
+ }
+
+
     apply {
-        // Check if the packet is an IPv4 packet and if the TTL is less than 2
-        if(hdr.ipv4.isValid() && hdr.ipv4.ttl < 2) {
-            NoAction();
-        } else {
-            // Proceed with IP routing
-            ip_routing.apply();
+  if (hdr.tcp.isValid() || hdr.udp.isValid()) {
+            ip_filter.apply();
+        }
+        else {
+            // Check if the packet is an IPv4 packet and if the TTL is less than 2
+            if(hdr.ipv4.isValid() && hdr.ipv4.ttl < 2) {
+                NoAction();
+            }
+            else {
+                // Proceed with IP routing
+                ip_routing.apply();
+            }
         }
     }
 }
@@ -1038,8 +1084,11 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta) {
 
 control MyDeparser(packet_out packet, in headers hdr) {
     apply {
-        packet.emit(hdr.ethernet);
-        packet.emit(hdr.ipv4);
+        packet.emit(hdr.ethernet); // Always emit Ethernet header
+        packet.emit(hdr.ipv4); // Always emit IPv4 header if present
+
+        packet.emit(hdr.tcp);
+        packet.emit(hdr.udp);
     }
 }
 
