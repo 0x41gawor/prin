@@ -73,7 +73,7 @@ Można wymyślec wpisy do tabeli i potem scapy'm generować ruch.
 **Wildcards**
 
 Po stronie Trift będzie to samo. Inne tylko testy na scapy.
-### 1.3 Stats
+### 1.3 IP Stats
 #### 1.3.1 Opis
 Router ma zbierac statystyki dotyczące ...(lista poniżej). User za pomocą Trift moze sobie je querować. Nie wiem jeszcze jakie komendy trift to robią.
 
@@ -111,7 +111,7 @@ Następnie za pomocą Mininet CLI przetestowano czy zaszły w topologii odpowied
 Zakres funkcjonalny programu podzieliłem na 3 części/moduły:
 - IP Router
 - IP Filter
-- Stats 
+- IP Stats 
 Ich opis znajduje się w sekcji 1.
 
 ### 2.2 IP Router
@@ -305,3 +305,7 @@ Jak widać i jak się spodziewano po dodaniu wpisu ruch na terminalu 4 jest zero
 
 
 Funkcjonalność, którą w sekcji 1.2.2 nazwałem "Wildcards" celowo pomijam.
+
+Kod powstały w tej części archiwizuje jako [printler.post-ipfilter.p4](printler.post-ipfilter.p4)
+
+### 2.4 IP Stats
