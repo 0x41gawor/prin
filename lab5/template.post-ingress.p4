@@ -40,9 +40,8 @@ struct learn_digest_t {
 }
 
 struct metadata {
-    bit<48> dst_mac; // Field to store destination MAC address
-}
 
+}
 
 /*************************************************************************
 *********************** P A R S E R  ***********************************
@@ -88,7 +87,7 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) 
 {
-    // when no matching row (host) is found
+    
     action LearnHost() {
     	bit<32> receiver_id = 0;  // This should be a unique identifier for your digest
     	learn_digest_t data;
@@ -98,25 +97,19 @@ control MyIngress(inout headers hdr,
 
     	digest(receiver_id, data);
 	}
-	// when a host is known
-	action forward(bit<48> mac_addr, bit<9> egress_port) {
-        standard_metadata.egress_spec = egress_port;
-        meta.dst_mac = mac_addr;
-	}
 
 
 	table mac_address_table {
-		key = {
-			hdr.ipv4.srcAddr : exact;
-		}
-		actions = {
-			forward; // This is the action for known hosts
-			LearnHost; // This action is for unknown hosts
-		}
-		size = 1024;
-		default_action = LearnHost(); // Continue to use LearnHost for no match
-	}
-
+        key = {
+            hdr.ipv4.srcAddr : exact;
+        }
+        actions = {
+            NoAction;
+            LearnHost;
+        }
+        size = 1024;
+        default_action = LearnHost();
+    }
 
     apply {
         mac_address_table.apply();
@@ -134,7 +127,6 @@ control MyEgress(inout headers hdr,
 {
 	apply
 	{
-		 hdr.ethernet.dstAddr = meta.dst_mac;
 	}
 }
 

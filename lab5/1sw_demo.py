@@ -57,7 +57,7 @@ class SingleSwitchTopo(Topo):
 
         for h in range(n):
             host = self.addHost('h%d' % (h + 1),
-                                ip = "10.0.%d.10/24" % h,
+                                ip = "10.0.0.%d/24" % (h+1),
                                 mac = '00:04:00:00:00:%02x' %h)
             self.addLink(host, switch)
         

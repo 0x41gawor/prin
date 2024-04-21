@@ -3,11 +3,23 @@
     {
       "name" : "scalars_0",
       "id" : 0,
-      "fields" : []
+      "fields" : [
+        ["metadata.dst_mac", 48, false]
+      ]
+    },
+    {
+      "name" : "learn_digest_t",
+      "id" : 1,
+      "fields" : [
+        ["ip_address", 32, false],
+        ["mac_address", 48, false],
+        ["port", 9, false],
+        ["_padding", 7, false]
+      ]
     },
     {
       "name" : "standard_metadata",
-      "id" : 1,
+      "id" : 2,
       "fields" : [
         ["ingress_port", 9, false],
         ["egress_spec", 9, false],
@@ -25,23 +37,78 @@
         ["checksum_error", 1, false],
         ["parser_error", 32, false],
         ["priority", 3, false],
-        ["_padding", 3, false]
+        ["_padding_1", 3, false]
+      ]
+    },
+    {
+      "name" : "ethernet_t",
+      "id" : 3,
+      "fields" : [
+        ["dstAddr", 48, false],
+        ["srcAddr", 48, false],
+        ["etherType", 16, false]
+      ]
+    },
+    {
+      "name" : "ipv4_t",
+      "id" : 4,
+      "fields" : [
+        ["version", 4, false],
+        ["ihl", 4, false],
+        ["diffserv", 8, false],
+        ["totalLen", 16, false],
+        ["identification", 16, false],
+        ["flags", 3, false],
+        ["fragOffset", 13, false],
+        ["ttl", 8, false],
+        ["protocol", 8, false],
+        ["hdrChecksum", 16, false],
+        ["srcAddr", 32, false],
+        ["dstAddr", 32, false]
       ]
     }
   ],
   "headers" : [
     {
-      "name" : "scalars",
+      "name" : "tmp",
       "id" : 0,
+      "header_type" : "learn_digest_t",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "data_0",
+      "id" : 1,
+      "header_type" : "learn_digest_t",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "scalars",
+      "id" : 2,
       "header_type" : "scalars_0",
       "metadata" : true,
       "pi_omit" : true
     },
     {
       "name" : "standard_metadata",
-      "id" : 1,
+      "id" : 3,
       "header_type" : "standard_metadata",
       "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "ethernet",
+      "id" : 4,
+      "header_type" : "ethernet_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "ipv4",
+      "id" : 5,
+      "header_type" : "ipv4_t",
+      "metadata" : false,
       "pi_omit" : true
     }
   ],
@@ -69,7 +136,52 @@
         {
           "name" : "start",
           "id" : 0,
-          "parser_ops" : [],
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "ethernet"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x0800",
+              "mask" : null,
+              "next_state" : "parse_ipv4"
+            },
+            {
+              "type" : "default",
+              "value" : null,
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["ethernet", "etherType"]
+            }
+          ]
+        },
+        {
+          "name" : "parse_ipv4",
+          "id" : 1,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "ipv4"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
           "transitions" : [
             {
               "type" : "default",
@@ -90,7 +202,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "template.p4",
-        "line" : 88,
+        "line" : 157,
         "column" : 8,
         "source_fragment" : "MyDeparser"
       },
@@ -102,20 +214,240 @@
   "counter_arrays" : [],
   "register_arrays" : [],
   "calculations" : [],
-  "learn_lists" : [],
-  "actions" : [],
+  "learn_lists" : [
+    {
+      "id" : 1,
+      "name" : "learn_digest_t",
+      "source_info" : {
+        "filename" : "template.p4",
+        "line" : 99,
+        "column" : 25,
+        "source_fragment" : "data"
+      },
+      "elements" : [
+        {
+          "type" : "field",
+          "value" : ["tmp", "ip_address"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tmp", "mac_address"]
+        },
+        {
+          "type" : "field",
+          "value" : ["tmp", "port"]
+        }
+      ]
+    }
+  ],
+  "actions" : [
+    {
+      "name" : "MyIngress.LearnHost",
+      "id" : 0,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["data_0", "ip_address"]
+            },
+            {
+              "type" : "field",
+              "value" : ["ipv4", "srcAddr"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 95,
+            "column" : 5,
+            "source_fragment" : "data.ip_address = hdr.ipv4.srcAddr"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["data_0", "mac_address"]
+            },
+            {
+              "type" : "field",
+              "value" : ["ethernet", "srcAddr"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 96,
+            "column" : 5,
+            "source_fragment" : "data.mac_address = hdr.ethernet.srcAddr"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["data_0", "port"]
+            },
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "ingress_port"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 97,
+            "column" : 5,
+            "source_fragment" : "data.port = standard_metadata.ingress_port"
+          }
+        },
+        {
+          "op" : "assign_header",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "tmp"
+            },
+            {
+              "type" : "header",
+              "value" : "data_0"
+            }
+          ],
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 99,
+            "column" : 25,
+            "source_fragment" : "data"
+          }
+        },
+        {
+          "op" : "generate_digest",
+          "parameters" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x1"
+            }
+          ],
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 99,
+            "column" : 5,
+            "source_fragment" : "digest(receiver_id, data)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "MyIngress.forward",
+      "id" : 1,
+      "runtime_data" : [
+        {
+          "name" : "mac_addr",
+          "bitwidth" : 48
+        },
+        {
+          "name" : "egress_port",
+          "bitwidth" : 9
+        }
+      ],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "egress_spec"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 1
+            }
+          ],
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 103,
+            "column" : 4,
+            "source_fragment" : "standard_metadata.egress_spec = egress_port"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "metadata.dst_mac"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 0
+            }
+          ],
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 104,
+            "column" : 4,
+            "source_fragment" : "meta.dst_mac = mac_addr"
+          }
+        }
+      ]
+    }
+  ],
   "pipelines" : [
     {
       "name" : "ingress",
       "id" : 0,
       "source_info" : {
         "filename" : "template.p4",
-        "line" : 50,
+        "line" : 87,
         "column" : 8,
         "source_fragment" : "MyIngress"
       },
-      "init_table" : null,
-      "tables" : [],
+      "init_table" : "MyIngress.mac_address_table",
+      "tables" : [
+        {
+          "name" : "MyIngress.mac_address_table",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 108,
+            "column" : 7,
+            "source_fragment" : "mac_address_table"
+          },
+          "key" : [
+            {
+              "match_type" : "exact",
+              "name" : "hdr.ipv4.srcAddr",
+              "target" : ["ipv4", "srcAddr"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [1, 0],
+          "actions" : ["MyIngress.forward", "MyIngress.LearnHost"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "MyIngress.forward" : null,
+            "MyIngress.LearnHost" : null
+          },
+          "default_entry" : {
+            "action_id" : 0,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        }
+      ],
       "action_profiles" : [],
       "conditionals" : []
     },
@@ -124,7 +456,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "template.p4",
-        "line" : 63,
+        "line" : 131,
         "column" : 8,
         "source_fragment" : "MyEgress"
       },

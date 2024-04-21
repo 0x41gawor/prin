@@ -1,3 +1,96 @@
 pkg_info {
   arch: "v1model"
 }
+tables {
+  preamble {
+    id: 47109300
+    name: "MyIngress.mac_address_table"
+    alias: "mac_address_table"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.ipv4.srcAddr"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  action_refs {
+    id: 29683729
+  }
+  action_refs {
+    id: 28892889
+  }
+  size: 1024
+}
+actions {
+  preamble {
+    id: 28892889
+    name: "MyIngress.LearnHost"
+    alias: "LearnHost"
+  }
+}
+actions {
+  preamble {
+    id: 29683729
+    name: "MyIngress.forward"
+    alias: "forward"
+  }
+  params {
+    id: 1
+    name: "mac_addr"
+    bitwidth: 48
+  }
+  params {
+    id: 2
+    name: "egress_port"
+    bitwidth: 9
+  }
+}
+digests {
+  preamble {
+    id: 390699902
+    name: "learn_digest_t"
+    alias: "learn_digest_t"
+  }
+  type_spec {
+    struct {
+      name: "learn_digest_t"
+    }
+  }
+}
+type_info {
+  structs {
+    key: "learn_digest_t"
+    value {
+      members {
+        name: "ip_address"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 32
+            }
+          }
+        }
+      }
+      members {
+        name: "mac_address"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 48
+            }
+          }
+        }
+      }
+      members {
+        name: "port"
+        type_spec {
+          bitstring {
+            bit {
+              bitwidth: 9
+            }
+          }
+        }
+      }
+    }
+  }
+}
