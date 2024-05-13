@@ -90,7 +90,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "zad1.p4",
-        "line" : 103,
+        "line" : 105,
         "column" : 8,
         "source_fragment" : "MyDeparser"
       },
@@ -134,7 +134,7 @@
           ],
           "source_info" : {
             "filename" : "zad1.p4",
-            "line" : 54,
+            "line" : 53,
             "column" : 3,
             "source_fragment" : "standard_metadata.egress_spec = out_port"
           }
@@ -148,7 +148,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "zad1.p4",
-        "line" : 49,
+        "line" : 47,
         "column" : 8,
         "source_fragment" : "MyIngress"
       },
@@ -159,7 +159,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "zad1.p4",
-            "line" : 57,
+            "line" : 59,
             "column" : 7,
             "source_fragment" : "interface_mapper"
           },
@@ -200,7 +200,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "zad1.p4",
-        "line" : 78,
+        "line" : 80,
         "column" : 8,
         "source_fragment" : "MyEgress"
       },
