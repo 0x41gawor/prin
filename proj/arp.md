@@ -86,3 +86,54 @@ header arp_t {
 Tabela z kluczem 'target ip address` oraz nr portu.
 
 > No dobrze, ale przecież, żeby wygenerować ARP Reply to trzeba mieć MAC adres tego interfejsu... Skąd go mamy wziąć? Po co nam ten numer portu w tabeli?
+> ![](img/2.png)
+
+Czyli musimy zrobić tabelę, która mapuje adres IP na numer portu oraz jego adres MAC.
+
+//TODO
+
+TODO zrobić POC komunikacji z control plane oraz wychwytywaniu pakietu ARP.
+Czyli takie PoC, że jak przyjdzie pakiet ARP do switch'a to ona wysła jakieś info o tym do control plane.
+
+## Implementation
+### ARP Header
+```p4
+header ethernet_t {
+    bit<48> dstAddr;
+    bit<48> srcAddr;
+    bit<16> etherType;
+}
+
+header arp_t {
+    bit<16> htype;  // Hardware type
+    bit<16> ptype;  // Protocol type
+    bit<8>  hlen;   // Hardware address length
+    bit<8>  plen;   // Protocol address length
+    bit<16> oper;   // Operation (1 for request, 2 for reply)
+    bit<48> sha;    // Sender hardware address
+    bit<32> spa;    // Sender protocol address
+    bit<48> tha;    // Target hardware address
+    bit<32> tpa;    // Target protocol address
+}
+```
+### ARP Parser
+```p4
+parser MyParser(packet_in packet, out headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+    state start {
+        transition parse_ethernet;
+    }
+
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
+        transition select(hdr.ethernet.etherType) {
+            0x0806: parse_arp;  // ARP EtherType
+            default: accept;
+        }
+    }
+
+    state parse_arp {
+        packet.extract(hdr.arp);
+        transition accept;
+    }
+}
+```
