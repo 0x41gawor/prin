@@ -25,16 +25,14 @@ header arp_t {
     bit<32> tpa;  // Target protocol address
 }
 
-struct headers_t
-{
-	ethernet_t ethernet;
+struct headers_t {
+    ethernet_t ethernet;
     arp_t arp;
 }
 
 struct metadata_t {
     bit<9> ingress_port;
 }
-
 
 /*************************************************************************
 *********************** P A R S E R  ***********************************
@@ -45,7 +43,7 @@ parser MyParser(packet_in packet,
                 inout metadata_t meta,
                 inout standard_metadata_t standard_metadata)
 {
-	state start {
+    state start {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
             0x0806: parse_arp;
@@ -59,18 +57,15 @@ parser MyParser(packet_in packet,
     }
 }
 
-
 /*************************************************************************
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
 *************************************************************************/
 
 control MyVerifyChecksum(inout headers_t hdr, inout metadata_t meta)
 {   
-	apply
-	{
-	}
+    apply {
+    }
 }
-
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   *******************
@@ -97,10 +92,10 @@ control MyIngress(inout headers_t hdr,
         standard_metadata.egress_spec = standard_metadata.ingress_port;
     }
 
-   action drop() {
-		// Drop the packet
-		mark_to_drop(standard_metadata);
-	}
+    action drop() {
+        // Drop the packet
+        mark_to_drop(standard_metadata);
+    }
 
     table arp_lookup {
         key = {
@@ -130,9 +125,8 @@ control MyEgress(inout headers_t hdr,
                  inout metadata_t meta,
                  inout standard_metadata_t standard_metadata)
 {
-	apply
-	{
-	}
+    apply {
+    }
 }
 
 /*************************************************************************
@@ -141,11 +135,9 @@ control MyEgress(inout headers_t hdr,
 
 control MyComputeChecksum(inout headers_t hdr, inout metadata_t meta)
 {
-	apply
-	{
-	}
+    apply {
+    }
 }
-
 
 /*************************************************************************
 ***********************  D E P A R S E R  *******************************
@@ -153,7 +145,7 @@ control MyComputeChecksum(inout headers_t hdr, inout metadata_t meta)
 
 control MyDeparser(packet_out packet, in headers_t hdr)
 {
-	apply {
+    apply {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.arp);
     }
@@ -164,10 +156,10 @@ control MyDeparser(packet_out packet, in headers_t hdr)
 *************************************************************************/
 
 V1Switch(
-	MyParser(),
-	MyVerifyChecksum(),
-	MyIngress(),
-	MyEgress(),
-	MyComputeChecksum(),
-	MyDeparser()
+    MyParser(),
+    MyVerifyChecksum(),
+    MyIngress(),
+    MyEgress(),
+    MyComputeChecksum(),
+    MyDeparser()
 ) main;

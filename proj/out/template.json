@@ -4,6 +4,7 @@
       "name" : "scalars_0",
       "id" : 0,
       "fields" : [
+        ["tmp", 32, false],
         ["metadata_t.ingress_port", 9, false],
         ["_padding_0", 7, false]
       ]
@@ -176,7 +177,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "template.p4",
-        "line" : 154,
+        "line" : 153,
         "column" : 8,
         "source_fragment" : "MyDeparser"
       },
@@ -185,7 +186,20 @@
     }
   ],
   "meter_arrays" : [],
-  "counter_arrays" : [],
+  "counter_arrays" : [
+    {
+      "name" : "MyIngress.arp_packets_received",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "template.p4",
+        "line" : 82,
+        "column" : 37,
+        "source_fragment" : "arp_packets_received"
+      },
+      "size" : 64,
+      "is_direct" : false
+    }
+  ],
   "register_arrays" : [],
   "calculations" : [],
   "learn_lists" : [],
@@ -220,7 +234,7 @@
           ],
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 86,
+            "line" : 87,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.dstAddr = hdr.ethernet.srcAddr"
           }
@@ -239,7 +253,7 @@
           ],
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 87,
+            "line" : 88,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.srcAddr = target_mac"
           }
@@ -258,7 +272,7 @@
           ],
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 90,
+            "line" : 91,
             "column" : 8,
             "source_fragment" : "hdr.arp.oper = 0x0002"
           }
@@ -277,7 +291,7 @@
           ],
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 91,
+            "line" : 92,
             "column" : 8,
             "source_fragment" : "hdr.arp.tha = hdr.arp.sha"
           }
@@ -296,7 +310,7 @@
           ],
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 92,
+            "line" : 93,
             "column" : 8,
             "source_fragment" : "hdr.arp.sha = target_mac"
           }
@@ -315,7 +329,7 @@
           ],
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 93,
+            "line" : 94,
             "column" : 8,
             "source_fragment" : "hdr.arp.tpa = hdr.arp.spa"
           }
@@ -334,7 +348,7 @@
           ],
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 97,
+            "line" : 98,
             "column" : 8,
             "source_fragment" : "standard_metadata.egress_spec = standard_metadata.ingress_port"
           }
@@ -356,8 +370,8 @@
           ],
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 102,
-            "column" : 2,
+            "line" : 103,
+            "column" : 8,
             "source_fragment" : "mark_to_drop(standard_metadata)"
           }
         }
@@ -378,9 +392,67 @@
           ],
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 102,
-            "column" : 2,
+            "line" : 103,
+            "column" : 8,
             "source_fragment" : "mark_to_drop(standard_metadata)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "template119",
+      "id" : 4,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "field",
+                    "value" : ["standard_metadata", "ingress_port"]
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 119,
+            "column" : 39,
+            "source_fragment" : "(bit<32>) standard_metadata.ingress_port"
+          }
+        },
+        {
+          "op" : "count",
+          "parameters" : [
+            {
+              "type" : "counter_array",
+              "value" : "MyIngress.arp_packets_received"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 119,
+            "column" : 12,
+            "source_fragment" : "arp_packets_received.count((bit<32>) standard_metadata.ingress_port)"
           }
         }
       ]
@@ -392,18 +464,47 @@
       "id" : 0,
       "source_info" : {
         "filename" : "template.p4",
-        "line" : 79,
+        "line" : 76,
         "column" : 8,
         "source_fragment" : "MyIngress"
       },
       "init_table" : "node_2",
       "tables" : [
         {
-          "name" : "MyIngress.arp_lookup",
+          "name" : "tbl_template119",
           "id" : 0,
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 105,
+            "line" : 119,
+            "column" : 12,
+            "source_fragment" : "arp_packets_received.count((bit<32>) standard_metadata.ingress_port)"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [4],
+          "actions" : ["template119"],
+          "base_default_next" : "MyIngress.arp_lookup",
+          "next_tables" : {
+            "template119" : "MyIngress.arp_lookup"
+          },
+          "default_entry" : {
+            "action_id" : 4,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "MyIngress.arp_lookup",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "template.p4",
+            "line" : 106,
             "column" : 10,
             "source_fragment" : "arp_lookup"
           },
@@ -438,10 +539,10 @@
         },
         {
           "name" : "tbl_drop",
-          "id" : 1,
+          "id" : 2,
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 120,
+            "line" : 122,
             "column" : 12,
             "source_fragment" : "drop()"
           },
@@ -473,7 +574,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "template.p4",
-            "line" : 117,
+            "line" : 118,
             "column" : 12,
             "source_fragment" : "hdr.ethernet.etherType == 0x0806 && hdr.arp.oper == 0x0001"
           },
@@ -511,7 +612,7 @@
               }
             }
           },
-          "true_next" : "MyIngress.arp_lookup",
+          "true_next" : "tbl_template119",
           "false_next" : "tbl_drop"
         }
       ]
@@ -521,7 +622,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "template.p4",
-        "line" : 129,
+        "line" : 131,
         "column" : 8,
         "source_fragment" : "MyEgress"
       },
