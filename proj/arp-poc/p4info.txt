@@ -1,0 +1,51 @@
+pkg_info {
+  arch: "v1model"
+}
+tables {
+  preamble {
+    id: 36620799
+    name: "MyIngress.arp_lookup"
+    alias: "arp_lookup"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.arp.tpa"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "standard_metadata.ingress_port"
+    bitwidth: 9
+    match_type: EXACT
+  }
+  action_refs {
+    id: 23911168
+  }
+  action_refs {
+    id: 21257015
+  }
+  size: 1024
+}
+actions {
+  preamble {
+    id: 21257015
+    name: "NoAction"
+    alias: "NoAction"
+    annotations: "@noWarn(\"unused\")"
+  }
+}
+actions {
+  preamble {
+    id: 23911168
+    name: "MyIngress.send_arp_reply"
+    alias: "send_arp_reply"
+  }
+  params {
+    id: 1
+    name: "target_mac"
+    bitwidth: 48
+  }
+}
+type_info {
+}
