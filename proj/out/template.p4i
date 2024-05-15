@@ -890,8 +890,6 @@ package V1Switch<H, M>(Parser<H, M> p,
 **************   H E A D E R S   A N D   S T R U C T S   ****************
 *************************************************************************/
 
-
-
 header ethernet_t {
     bit<48> dstAddr;
     bit<48> srcAddr;
@@ -960,10 +958,6 @@ control MyIngress(inout headers_t hdr,
                   inout metadata_t meta,
                   inout standard_metadata_t standard_metadata)
 {
-
-
-    counter(64, CounterType.packets) arp_packets_received;
-
     action send_arp_reply(bit<48> target_mac) {
         // Swap Ethernet addresses
         bit<48> temp_mac = hdr.ethernet.dstAddr;
@@ -974,35 +968,31 @@ control MyIngress(inout headers_t hdr,
         hdr.arp.oper = 0x0002; // ARP Reply
         hdr.arp.tha = hdr.arp.sha; // Target hardware address = Sender hardware address
         hdr.arp.sha = target_mac; // Sender hardware address = MAC address from table
-        hdr.arp.tpa = hdr.arp.spa; // Target protocol address = Sender protocol address
+        // Swap IP address
+        bit<32> temp_ip = hdr.arp.spa;
         hdr.arp.spa = hdr.arp.tpa; // Sender protocol address = Target protocol address
+        hdr.arp.tpa = temp_ip; // Target protocol address = Sender protocol address
 
         // Send ARP reply via the ingress port
         standard_metadata.egress_spec = standard_metadata.ingress_port;
     }
 
-    action drop() {
-        // Drop the packet
-        mark_to_drop(standard_metadata);
-    }
-
     table arp_lookup {
         key = {
             hdr.arp.tpa: exact;
+            standard_metadata.ingress_port: exact;
         }
         actions = {
             send_arp_reply;
-            drop;
+            NoAction;
         }
         size = 1024;
+        default_action = NoAction;
     }
 
     apply {
-        if (hdr.ethernet.etherType == 0x0806 && hdr.arp.oper == 0x0001) { // ARP Request
-            arp_packets_received.count((bit<32>) standard_metadata.ingress_port);
+        if (hdr.ethernet.etherType == 0x0806) { // ARP Request
             arp_lookup.apply();
-        } else {
-            drop();
         }
     }
 }

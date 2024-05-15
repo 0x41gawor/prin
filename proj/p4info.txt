@@ -13,16 +13,17 @@ tables {
     bitwidth: 32
     match_type: EXACT
   }
+  match_fields {
+    id: 2
+    name: "standard_metadata.ingress_port"
+    bitwidth: 9
+    match_type: EXACT
+  }
   action_refs {
     id: 23911168
   }
   action_refs {
-    id: 25652968
-  }
-  action_refs {
     id: 21257015
-    annotations: "@defaultonly"
-    scope: DEFAULT_ONLY
   }
   size: 1024
 }
@@ -45,24 +46,6 @@ actions {
     name: "target_mac"
     bitwidth: 48
   }
-}
-actions {
-  preamble {
-    id: 25652968
-    name: "MyIngress.drop"
-    alias: "drop"
-  }
-}
-counters {
-  preamble {
-    id: 314396370
-    name: "MyIngress.arp_packets_received"
-    alias: "arp_packets_received"
-  }
-  spec {
-    unit: PACKETS
-  }
-  size: 64
 }
 type_info {
 }
