@@ -4,21 +4,8 @@ sh.setup(
     device_id=0,
     grpc_addr='localhost:9559',
     election_id=(0, 1),
-    config=sh.FwdPipeConfig('p4info.txt', 'out/runtime.json')
+    config=sh.FwdPipeConfig('p4info.txt', 'out/struthio.json')
 )
-
-########################################
-######## mac_rewriting_table ###########
-########################################
-
-mt = sh.TableEntry('mac_rewriting_table')(action='set_smac')
-mt.match['egress_port'] = '1'
-mt.action['mac'] = '12:aa:bb:00:00:00'
-mt.insert()
-
-mt.match['egress_port'] = '2'
-mt.action['mac'] = '12:aa:bb:00:00:01'
-mt.insert()     
 
 ########################################
 ############ digest init ###############

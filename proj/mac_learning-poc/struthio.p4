@@ -7,6 +7,12 @@
 **************   H E A D E R S   A N D   S T R U C T S   ****************
 *************************************************************************/
 
+struct learn_t {
+    bit<9> port;
+    bit<48> mac;
+    bit<32> ip_addr;
+}
+
 header ethernet_t {
     bit<48> dstAddr;
     bit<48> srcAddr;
@@ -25,13 +31,31 @@ header arp_t {
     bit<32> tpa;  // Target protocol address
 }
 
+header ip_t {
+	bit<4>    version;
+	bit<4>    ihl;
+	bit<8>    diffserv;
+	bit<16>   totalLen;
+	bit<16>   identification;
+	bit<3>    flags;
+	bit<13>   fragOffset;
+	bit<8>    ttl;
+	bit<8>    protocol;
+	bit<16>   hdrChecksum;
+	bit<32>   srcAddr;
+	bit<32>   dstAddr;
+}
+
 struct headers_t {
     ethernet_t ethernet;
     arp_t arp;
+    ip_t ip;
 }
 
 struct metadata_t {
     bit<9> ingress_port;
+    bit<32> next_hop;
+    learn_t learn;
 }
 
 /*************************************************************************
@@ -46,6 +70,7 @@ parser MyParser(packet_in packet,
     state start {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
+            0x0800: parse_ip;
             0x0806: parse_arp;
             default: accept;
         }
@@ -53,6 +78,11 @@ parser MyParser(packet_in packet,
 
     state parse_arp {
         packet.extract(hdr.arp);
+        transition accept;
+    }
+
+    state parse_ip {
+        packet.extract(hdr.ip);
         transition accept;
     }
 }
@@ -75,6 +105,14 @@ control MyIngress(inout headers_t hdr,
                   inout metadata_t meta,
                   inout standard_metadata_t standard_metadata) 
 {
+
+    action learn_host() {
+        meta.learn.port = standard_metadata.ingress_port;
+        meta.learn.mac = hdr.ethernet.srcAddr;
+        meta.learn.ip_addr = hdr.ip.srcAddr;
+        digest<learn_t>(1, meta.learn);
+    }
+
     action send_arp_reply(bit<48> target_mac) {
         // Swap Ethernet addresses
         bit<48> temp_mac = hdr.ethernet.dstAddr;
@@ -94,7 +132,27 @@ control MyIngress(inout headers_t hdr,
         standard_metadata.egress_spec = standard_metadata.ingress_port;
     }
 
-    table arp_lookup {
+    action route(bit<32> next_hop) {
+        meta.next_hop = next_hop;
+    }
+
+    action forward(bit<9> egress_port) {
+        standard_metadata.egress_spec = egress_port;
+    }
+
+    table tbl_mac_learn {
+        key = {
+            hdr.ethernet.srcAddr: exact;
+        }
+
+        actions = {
+            learn_host;
+            NoAction;
+        }
+        default_action = learn_host;
+    }
+
+    table tbl_arp_lookup {
         key = {
             hdr.arp.tpa: exact;
             standard_metadata.ingress_port: exact;
@@ -103,13 +161,42 @@ control MyIngress(inout headers_t hdr,
             send_arp_reply;
             NoAction;
         }
-        size = 1024;
         default_action = NoAction;
     }
 
+    table tbl_ip_routing {
+        key = {
+            hdr.ip.dstAddr: lpm;
+        }
+        actions = {
+            route;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    table tbl_ip_forwarding {
+        key = {
+            meta.next_hop: exact;
+        }
+        actions = {
+            forward;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
     apply {
-        if (hdr.ethernet.etherType == 0x0806 && hdr.arp.oper == 0x0001) {  // ARP Request
-            arp_lookup.apply();
+        // do we know this host?
+        tbl_mac_learn.apply();
+        // is this ARP packet?
+        if (hdr.ethernet.etherType == 0x0806 && hdr.arp.oper == 0x0001) {  
+            tbl_arp_lookup.apply();
+        }
+        // is this IP packet?
+        if (hdr.ethernet.etherType == 0x0800) {
+            tbl_ip_routing.apply();
+            tbl_ip_forwarding.apply();
         }
     }
 }
@@ -122,7 +209,28 @@ control MyEgress(inout headers_t hdr,
                  inout metadata_t meta,
                  inout standard_metadata_t standard_metadata)
 {
+
+    action update_mac_addresses(bit<48> src, bit<48> dst) {
+        hdr.ethernet.srcAddr = src;
+        hdr.ethernet.dstAddr = dst;
+    }
+
+    table tbl_mac_update {
+        key = {
+            standard_metadata.egress_spec: exact;
+        }
+        actions = {
+            update_mac_addresses;
+            NoAction;
+        }
+        default_action = NoAction;
+    }
+
     apply {
+        // is this IP packet?
+        if (hdr.ethernet.etherType == 0x0800) {
+            tbl_mac_update.apply();
+        }
     }
 }
 
