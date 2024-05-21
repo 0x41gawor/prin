@@ -133,11 +133,11 @@ Egress:
 
 Więc mamy tabele takie:
 - `port_config` ona mówi o tym jakie porty mają przypisane ip_addr i mac_addr. Ona jest tylko w Control Plane, to jest pseudo tabela. Nie mam jej w P4. Nie jest querowana.
-- `tbl_mac_learn` ona mowi o tym jakie znamy (my switch) hosty. Host to trójka {port, eth_addr, ip_addr}.
-- `tbl_ip_routing` ona mowi o tym jaki jest next-hop na podstawie ip_dst_addr. Wpisy tutaj można dodawać też ręcznie z control plane (w przypadku sieci odległych).<br>
+- `tbl_mac_learn` ona mowi o tym jakie znamy (my - switch) hosty. Host to trójka {port, eth_addr, ip_addr}, ale implementacyjnie będzie to tylko adres mac.
+- `tbl_ip_routing` ona mowi o tym jaki jest next-hop na podstawie ip.dst_addr. Wpisy tutaj można dodawać też ręcznie z control plane (w przypadku sieci odległych).<br>
 `key{dst: ip_addr}, match{next_hop: ip_addr}`
-- `tbl_ip_forwarding` ona mówi o tym na jakim porcie wyjściowym mamy jaki ip_addr hosta po drugiej stronie łącza <br>
+- `tbl_ip_forwarding` ona mówi o tym na jakim porcie wyjściowym mamy dany ip_addr hosta po drugiej stronie łącza <br>
 `key{next_hop: ip_addr} match{egress_port: int}`
-- `tbl_mac_update` ona mówi jak zupdateować adresy MAC w nagłówku ETH, gdy pakiet wychodzi danym portem <br>
+- `tbl_mac_update` ona mówi jak zupdateować adresy MAC w nagłówku eth, gdy pakiet wychodzi danym portem <br>
 `key{egress_port: int} match{src_mac: eth_addr, dst_mac: eth_addr}`
 

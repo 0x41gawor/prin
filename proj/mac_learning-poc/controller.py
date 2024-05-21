@@ -17,10 +17,8 @@ def init_p4runtime():
         config=sh.FwdPipeConfig('p4info.txt', 'out/struthio.json')
     )
 
-########################################
-######## Insert port config ############
-########################################
-def init_port_config():
+# Adds proper arp table entries based on port config
+def insert_arp_config():
     for port in port_config.values():
         te = sh.TableEntry('MyIngress.tbl_arp_lookup')(action="send_arp_reply")
         te.match['standard_metadata.ingress_port'] = port["nr"]
@@ -28,9 +26,7 @@ def init_port_config():
         te.action['target_mac'] = port["mac"]
         te.insert()
 
-########################################
-############ digest init ###############
-########################################
+# Util func, initializes digest
 def init_digest():
     d = sh.DigestEntry('learn_t')
     d.ack_timeout_ns = 1000000000 # 1000ms, 1s
@@ -38,24 +34,25 @@ def init_digest():
     d.max_list_size = 100
     d.insert()
 
+# Inserts entry to tbl_mac_learn
 def tbl_mac_learn(mac):
     te = sh.TableEntry('MyIngress.tbl_mac_learn')(action='NoAction')
     te.match['hdr.ethernet.srcAddr'] = mac
     te.insert()
     known_hosts.append(mac)
-
+# Inserts entry to tbl_ip_routing
 def tbl_ip_routing(dst, next_hop):
     te = sh.TableEntry('MyIngress.tbl_ip_routing')(action='route')
     te.match['hdr.ip.dstAddr'] = dst
     te.action['next_hop'] = next_hop
     te.insert()
-
+# Inserts entry to tbl_ip_forwarding
 def tbl_ip_forwarding(next_hop, egress_port):
     te = sh.TableEntry('MyIngress.tbl_ip_forwarding')(action='forward')
     te.match['meta.next_hop'] = next_hop
     te.action['egress_port'] = str(egress_port)
     te.insert()
-
+# Inserts entry to tbl_mac_update
 def tbl_mac_update(egress_port, src, dst):
     te = sh.TableEntry('MyEgress.tbl_mac_update')(action='update_mac_addresses')
     te.match['standard_metadata.egress_spec'] = str(egress_port)
@@ -63,7 +60,9 @@ def tbl_mac_update(egress_port, src, dst):
     te.action['dst'] = dst
     te.insert()
 
-
+# Processes digest entries that come from data plane
+# This func collects entries for 10s and the iterates over them
+# For each entry it outputs its content and then make proper table entries if host is not known
 def process_digest_entries():
     for e in sh.DigestList().sniff(timeout=10):
         port_bytes = e.digest.data[0].struct.members[0].bitstring
@@ -79,7 +78,6 @@ def process_digest_entries():
         print("mac:", mac, "        raw: ", mac_bytes)
         print("ip_addr:", ip_addr, "             raw: ", ip_addr_bytes)
 
-
         if mac not in known_hosts:
             # Insert tbl_mac_learn entry
             tbl_mac_learn(mac=mac)
@@ -90,7 +88,7 @@ def process_digest_entries():
             # Insert tbl_mac_update entry
             tbl_mac_update(egress_port=port, src=port_config[port]["mac"], dst=mac)
 
-
+# Hndling the ctrl+c signal. Makes sure runtimeshell session is tear down
 def signal_handler(sig, frame):
     print("Interrupt received, shutting down...")
     sh.teardown()
@@ -100,7 +98,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
 
     init_p4runtime()
-    init_port_config()
+    insert_arp_config()
     init_digest()
 
     print("Starting digest processing. Press Ctrl+C to stop.")

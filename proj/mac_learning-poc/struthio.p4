@@ -193,15 +193,18 @@ control MyIngress(inout headers_t hdr,
     }
 
     apply {
-        // do we know this host?
+        // Do we know this host? If not, learn it (send info to control plane)
         tbl_mac_learn.apply();
-        // is this ARP packet?
+        // Is this ARP packet? 
         if (hdr.ethernet.etherType == 0x0806 && hdr.arp.oper == 0x0001) {  
+            // If is is, check if it concerns us, and eventually send ARP Reply
             tbl_arp_lookup.apply();
         }
-        // is this IP packet?
+        // Is this IP packet?
         if (hdr.ethernet.etherType == 0x0800) {
+            // Check the next hop ip address for this packet (based on its ip.dst_addr)
             tbl_ip_routing.apply();
+            // Set egress_port for this packet (based on next hop from previous step)
             tbl_ip_forwarding.apply();
         }
     }
@@ -233,8 +236,9 @@ control MyEgress(inout headers_t hdr,
     }
 
     apply {
-        // is this IP packet?
+        // Is this IP packet?
         if (hdr.ethernet.etherType == 0x0800) {
+            // If it is make proper changes in L2 addresses
             tbl_mac_update.apply();
         }
     }

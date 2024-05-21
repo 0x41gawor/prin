@@ -19,9 +19,6 @@ python3 controller.py
 python3 -m p4runtime_sh --grpc-addr localhost:9559 --device-id 0 --election-id 0,1 
 python3 -m p4runtime_sh --grpc-addr localhost:9559 --device-id 0 --election-id 0,1 --config p4info.txt,out/struthio.json
 
-
-
-
 for entry in table_entry["MyIngress.tbl_arp_lookup"].read():
     print(entry)
 
