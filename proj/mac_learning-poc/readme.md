@@ -1,6 +1,4 @@
-# Struthio
-
-<h1 align="center">Struthio.</h1>
+<h1 align="center">Struthio</h1>
 
 <p align="center">
   <img src="img/logo.png"/>
@@ -19,13 +17,14 @@ Switch na swoich interfejsach ma podłączone hosty. Mac Learning polega na tym,
 - odpowiednio podmieniać ethernet.dst_mac w warstwie L2
 - zrobić routing do bezpośrednio podłączonych hostów
 
-## Flow działania switcha:
+## Flow działania switcha
 
 ### Ogólnie
 Gdy przychodzi pakiet na Ingress to:
 - najpierw patrzymy, czy znamy host nadawcy (mac learning), jeśli tak to idziemy dalej, jeśli nie to digest do control plane leci.
 - patrzymy w tablice routingu i szukamy jaki jest next-hop dla pakietu tego, jeśli brak to dropujemy pakiet
 - Na podstawie next-hop ustawiamy pakietowi egress_port
+
 Pakiet leci na Eggress:
 - Tutaj podmiana eth.src_mac i eth.dst_mac na podstawie egress_port
 
@@ -33,15 +32,16 @@ Pakiet leci na Eggress:
 
 Ingress:
 - Przychodzi pakiet, szukamy czy mamy w `tbl_mac_learn` jego eth.src_addr. Jeśli nie to wysyłamy digestem trójkę `{ingress_port, packet.eth.src_addr, packet.ip.src_addr}`.
--- Controller w tym momencie może do `tbl_mac_learn` dodać tę trójkę. 
--- Controller w tym momencie może do `tbl_ip_routing` dodać wpis, że gdy dst_addr jest taki (packet.ip.src_addr), to next-hop ustawić należy taki (packet.ip.src_addr)
--- Controller w tym momencie może do `tbl_forwarding` dodać wpis, że gdy next-hop jest taki, to mamy go na tym porcie (ingress_port)
--- Controller w tym momencie może do `tbl_mac_update` dodać wpis, że na tym egress_port (ingress_port) w egress (przy wychodzeniu pakietu) trzeba podmieniać na:
+    - Controller w tym momencie może do `tbl_mac_learn` dodać tę trójkę. 
+    - Controller w tym momencie może do `tbl_ip_routing` dodać wpis, że gdy dst_addr jest taki (packet.ip.src_addr), to next-hop ustawić należy taki (packet.ip.src_addr)
+    - Controller w tym momencie może do `tbl_forwarding` dodać wpis, że gdy next-hop jest taki, to mamy go na tym porcie (ingress_port)
+    - Controller w tym momencie może do `tbl_mac_update` dodać wpis, że na tym egress_port (ingress_port) w egress (przy wychodzeniu pakietu) trzeba podmieniać na:
     -  eth.src_mac - to z configu
     -  eth.dst_mac - to z trojki (packet.eth.src_addr)
 - Patrzymy w `tbl_routng`, kluczem jest packet.ip.dst_addr, a dostajemy next-hop
 - Patrzymy w `tbl_ip_forwarding` kluczem jest next-hop, a dostajemy egress_port
 - Ustawiamy pakietowi egress_port
+
 Egress:
 - Patrzymy `tbl_mac_update`, kluczem jest egress_port (port którym wyjdzie pakiet) a parametrem akcji updated_src_mac, updated_dst_mac, które zostaną odpwiednio wpisane do packet.eth.src_mac i packet.eth.dst_mac
 
