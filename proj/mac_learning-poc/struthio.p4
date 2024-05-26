@@ -100,6 +100,7 @@ parser MyParser(packet_in packet,
 control MyVerifyChecksum(inout headers_t hdr, inout metadata_t meta)
 {   
     apply {
+        
     }
 }
 
@@ -202,10 +203,16 @@ control MyIngress(inout headers_t hdr,
         }
         // Is this IP packet?
         if (hdr.ethernet.etherType == 0x0800) {
-            // Check the next hop ip address for this packet (based on its ip.dst_addr)
-            tbl_ip_routing.apply();
-            // Set egress_port for this packet (based on next hop from previous step)
-            tbl_ip_forwarding.apply();
+            // check if ttl is less than 2
+            if (hdr.ip.ttl < 2) {
+                NoAction();
+            }
+            else {
+                // Check the next hop ip address for this packet (based on its ip.dst_addr)
+                tbl_ip_routing.apply();
+                // Set egress_port for this packet (based on next hop from previous step)
+                tbl_ip_forwarding.apply();
+            }
         }
     }
 }
@@ -251,6 +258,14 @@ control MyEgress(inout headers_t hdr,
 control MyComputeChecksum(inout headers_t hdr, inout metadata_t meta)
 {
     apply {
+        update_checksum(
+            hdr.ip.isValid(),
+            { hdr.ip.version, hdr.ip.ihl, hdr.ip.diffserv, hdr.ip.totalLen,
+              hdr.ip.identification, hdr.ip.flags, hdr.ip.fragOffset, hdr.ip.ttl,
+              hdr.ip.protocol, hdr.ip.srcAddr, hdr.ip.dstAddr },
+            hdr.ip.hdrChecksum,
+            HashAlgorithm.csum16
+        );
     }
 }
 

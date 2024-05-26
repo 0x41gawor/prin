@@ -293,7 +293,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "struthio.p4",
-        "line" : 257,
+        "line" : 276,
         "column" : 8,
         "source_fragment" : "MyDeparser"
       },
@@ -304,14 +304,72 @@
   "meter_arrays" : [],
   "counter_arrays" : [],
   "register_arrays" : [],
-  "calculations" : [],
+  "calculations" : [
+    {
+      "name" : "calc",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "struthio.p4",
+        "line" : 261,
+        "column" : 8,
+        "source_fragment" : "update_checksum( ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["ip", "version"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "ihl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "diffserv"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "totalLen"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "identification"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "flags"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "fragOffset"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "ttl"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "protocol"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "srcAddr"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ip", "dstAddr"]
+        }
+      ]
+    }
+  ],
   "learn_lists" : [
     {
       "id" : 1,
       "name" : "learn_t",
       "source_info" : {
         "filename" : "struthio.p4",
-        "line" : 119,
+        "line" : 120,
         "column" : 27,
         "source_fragment" : "meta"
       },
@@ -357,8 +415,14 @@
       "primitives" : []
     },
     {
-      "name" : "MyIngress.learn_host",
+      "name" : "NoAction",
       "id" : 4,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "MyIngress.learn_host",
+      "id" : 5,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -375,7 +439,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 116,
+            "line" : 117,
             "column" : 8,
             "source_fragment" : "meta.learn.port = standard_metadata.ingress_port"
           }
@@ -394,7 +458,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 117,
+            "line" : 118,
             "column" : 8,
             "source_fragment" : "meta.learn.mac = hdr.ethernet.srcAddr"
           }
@@ -413,7 +477,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 118,
+            "line" : 119,
             "column" : 8,
             "source_fragment" : "meta.learn.ip_addr = hdr.ip.srcAddr"
           }
@@ -432,7 +496,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 119,
+            "line" : 120,
             "column" : 27,
             "source_fragment" : "meta"
           }
@@ -451,7 +515,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 119,
+            "line" : 120,
             "column" : 27,
             "source_fragment" : "meta"
           }
@@ -470,7 +534,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 119,
+            "line" : 120,
             "column" : 27,
             "source_fragment" : "meta"
           }
@@ -489,7 +553,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 119,
+            "line" : 120,
             "column" : 8,
             "source_fragment" : "digest<learn_t>(1, meta.learn)"
           }
@@ -498,7 +562,7 @@
     },
     {
       "name" : "MyIngress.send_arp_reply",
-      "id" : 5,
+      "id" : 6,
       "runtime_data" : [
         {
           "name" : "target_mac",
@@ -520,7 +584,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 125,
+            "line" : 126,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.dstAddr = hdr.ethernet.srcAddr"
           }
@@ -539,7 +603,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 126,
+            "line" : 127,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.srcAddr = target_mac"
           }
@@ -558,7 +622,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 129,
+            "line" : 130,
             "column" : 8,
             "source_fragment" : "hdr.arp.oper = 0x0002"
           }
@@ -577,7 +641,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 130,
+            "line" : 131,
             "column" : 8,
             "source_fragment" : "hdr.arp.tha = hdr.arp.sha"
           }
@@ -596,7 +660,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 131,
+            "line" : 132,
             "column" : 8,
             "source_fragment" : "hdr.arp.sha = target_mac"
           }
@@ -615,7 +679,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 133,
+            "line" : 134,
             "column" : 8,
             "source_fragment" : "bit<32> temp_ip = hdr.arp.spa;"
           }
@@ -634,7 +698,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 134,
+            "line" : 135,
             "column" : 8,
             "source_fragment" : "hdr.arp.spa = hdr.arp.tpa"
           }
@@ -653,7 +717,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 135,
+            "line" : 136,
             "column" : 8,
             "source_fragment" : "hdr.arp.tpa = temp_ip"
           }
@@ -672,7 +736,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 138,
+            "line" : 139,
             "column" : 8,
             "source_fragment" : "standard_metadata.egress_spec = standard_metadata.ingress_port"
           }
@@ -681,7 +745,7 @@
     },
     {
       "name" : "MyIngress.route",
-      "id" : 6,
+      "id" : 7,
       "runtime_data" : [
         {
           "name" : "next_hop",
@@ -703,7 +767,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 142,
+            "line" : 143,
             "column" : 8,
             "source_fragment" : "meta.next_hop = next_hop"
           }
@@ -712,7 +776,7 @@
     },
     {
       "name" : "MyIngress.forward",
-      "id" : 7,
+      "id" : 8,
       "runtime_data" : [
         {
           "name" : "egress_port",
@@ -734,7 +798,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 146,
+            "line" : 147,
             "column" : 8,
             "source_fragment" : "standard_metadata.egress_spec = egress_port"
           }
@@ -743,13 +807,13 @@
     },
     {
       "name" : "NoAction",
-      "id" : 8,
+      "id" : 9,
       "runtime_data" : [],
       "primitives" : []
     },
     {
       "name" : "MyEgress.update_mac_addresses",
-      "id" : 9,
+      "id" : 10,
       "runtime_data" : [
         {
           "name" : "src",
@@ -775,7 +839,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 220,
+            "line" : 230,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.srcAddr = src"
           }
@@ -794,7 +858,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 221,
+            "line" : 231,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.dstAddr = dst"
           }
@@ -808,7 +872,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "struthio.p4",
-        "line" : 110,
+        "line" : 111,
         "column" : 8,
         "source_fragment" : "MyIngress"
       },
@@ -819,7 +883,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 149,
+            "line" : 150,
             "column" : 10,
             "source_fragment" : "tbl_mac_learn"
           },
@@ -837,7 +901,7 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [4, 0],
+          "action_ids" : [5, 0],
           "actions" : ["MyIngress.learn_host", "NoAction"],
           "base_default_next" : "node_3",
           "next_tables" : {
@@ -845,7 +909,7 @@
             "NoAction" : "node_3"
           },
           "default_entry" : {
-            "action_id" : 4,
+            "action_id" : 5,
             "action_const" : false,
             "action_data" : [],
             "action_entry_const" : false
@@ -856,7 +920,7 @@
           "id" : 1,
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 161,
+            "line" : 162,
             "column" : 10,
             "source_fragment" : "tbl_arp_lookup"
           },
@@ -880,7 +944,7 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [5, 1],
+          "action_ids" : [6, 1],
           "actions" : ["MyIngress.send_arp_reply", "NoAction"],
           "base_default_next" : "node_5",
           "next_tables" : {
@@ -895,11 +959,40 @@
           }
         },
         {
-          "name" : "MyIngress.tbl_ip_routing",
+          "name" : "tbl_NoAction",
           "id" : 2,
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 173,
+            "line" : 208,
+            "column" : 16,
+            "source_fragment" : "NoAction()"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [4],
+          "actions" : ["NoAction"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "NoAction" : null
+          },
+          "default_entry" : {
+            "action_id" : 4,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "MyIngress.tbl_ip_routing",
+          "id" : 3,
+          "source_info" : {
+            "filename" : "struthio.p4",
+            "line" : 174,
             "column" : 10,
             "source_fragment" : "tbl_ip_routing"
           },
@@ -917,7 +1010,7 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [6, 2],
+          "action_ids" : [7, 2],
           "actions" : ["MyIngress.route", "NoAction"],
           "base_default_next" : "MyIngress.tbl_ip_forwarding",
           "next_tables" : {
@@ -933,10 +1026,10 @@
         },
         {
           "name" : "MyIngress.tbl_ip_forwarding",
-          "id" : 3,
+          "id" : 4,
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 184,
+            "line" : 185,
             "column" : 10,
             "source_fragment" : "tbl_ip_forwarding"
           },
@@ -954,7 +1047,7 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [7, 3],
+          "action_ids" : [8, 3],
           "actions" : ["MyIngress.forward", "NoAction"],
           "base_default_next" : null,
           "next_tables" : {
@@ -976,7 +1069,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 199,
+            "line" : 200,
             "column" : 12,
             "source_fragment" : "hdr.ethernet.etherType == 0x0806 && hdr.arp.oper == 0x0001"
           },
@@ -1022,7 +1115,7 @@
           "id" : 1,
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 203,
+            "line" : 205,
             "column" : 12,
             "source_fragment" : "hdr.ethernet.etherType == 0x0800"
           },
@@ -1041,7 +1134,33 @@
             }
           },
           "false_next" : null,
-          "true_next" : "MyIngress.tbl_ip_routing"
+          "true_next" : "node_6"
+        },
+        {
+          "name" : "node_6",
+          "id" : 2,
+          "source_info" : {
+            "filename" : "struthio.p4",
+            "line" : 207,
+            "column" : 16,
+            "source_fragment" : "hdr.ip.ttl < 2"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "<",
+              "left" : {
+                "type" : "field",
+                "value" : ["ip", "ttl"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x02"
+              }
+            }
+          },
+          "true_next" : "tbl_NoAction",
+          "false_next" : "MyIngress.tbl_ip_routing"
         }
       ]
     },
@@ -1050,18 +1169,18 @@
       "id" : 1,
       "source_info" : {
         "filename" : "struthio.p4",
-        "line" : 214,
+        "line" : 224,
         "column" : 8,
         "source_fragment" : "MyEgress"
       },
-      "init_table" : "node_10",
+      "init_table" : "node_12",
       "tables" : [
         {
           "name" : "MyEgress.tbl_mac_update",
-          "id" : 4,
+          "id" : 5,
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 224,
+            "line" : 234,
             "column" : 10,
             "source_fragment" : "tbl_mac_update"
           },
@@ -1079,7 +1198,7 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [9, 8],
+          "action_ids" : [10, 9],
           "actions" : ["MyEgress.update_mac_addresses", "NoAction"],
           "base_default_next" : null,
           "next_tables" : {
@@ -1087,7 +1206,7 @@
             "NoAction" : null
           },
           "default_entry" : {
-            "action_id" : 8,
+            "action_id" : 9,
             "action_const" : false,
             "action_data" : [],
             "action_entry_const" : false
@@ -1097,11 +1216,11 @@
       "action_profiles" : [],
       "conditionals" : [
         {
-          "name" : "node_10",
-          "id" : 2,
+          "name" : "node_12",
+          "id" : 3,
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 237,
+            "line" : 247,
             "column" : 12,
             "source_fragment" : "hdr.ethernet.etherType == 0x0800"
           },
@@ -1125,7 +1244,34 @@
       ]
     }
   ],
-  "checksums" : [],
+  "checksums" : [
+    {
+      "name" : "cksum",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "struthio.p4",
+        "line" : 261,
+        "column" : 8,
+        "source_fragment" : "update_checksum( ..."
+      },
+      "target" : ["ip", "hdrChecksum"],
+      "type" : "generic",
+      "calculation" : "calc",
+      "verify" : false,
+      "update" : true,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "d2b",
+          "left" : null,
+          "right" : {
+            "type" : "field",
+            "value" : ["ip", "$valid$"]
+          }
+        }
+      }
+    }
+  ],
   "force_arith" : [],
   "extern_instances" : [],
   "field_aliases" : [
