@@ -56,7 +56,7 @@ struct metadata_t {
     bit<9> ingress_port;
     bit<32> next_hop;
     learn_t learn;
-    bit<1> is_arp;
+    bit<1> is_arp; //to mozna usunac
     bit<1> is_ip;
 }
 
@@ -202,7 +202,7 @@ control MyIngress(inout headers_t hdr,
             tbl_arp_lookup.apply();
         }
         // Is this IP packet?
-        if (hdr.ethernet.etherType == 0x0800) {
+        if (hdr.ethernet.etherType == 0x0800) { //tu lepiej zamienić to na hdr.ip.IsValid() jest to tożsame boolowska a czytelniejsze oraz unikamy undefined behavior w bloku
             // check if ttl is less than 2
             if (hdr.ip.ttl < 2) {
                 NoAction();
