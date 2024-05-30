@@ -1,4 +1,3 @@
-demo.py
 #!/usr/bin/env python3
 # Copyright 2013-present Barefoot Networks, Inc.
 #

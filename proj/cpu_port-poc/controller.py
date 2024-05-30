@@ -99,6 +99,8 @@ if __name__ == "__main__":
 
     init_p4runtime()
     insert_arp_config()
+    tbl_mac_update(egress_port=1, src=port_config[1]["mac"], dst="04:04:00:00:00:00")
+    tbl_mac_update(egress_port=2, src=port_config[2]["mac"], dst="04:04:00:00:00:01")
     init_digest()
 
     print("Starting digest processing. Press Ctrl+C to stop.")

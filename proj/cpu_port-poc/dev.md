@@ -27,4 +27,20 @@ h1 python3 test_packet_in.py
 ```
 
 ## PacketOut Test
+### Uruchomienie sieci:
+```sh
+sudo python3 1sw_demo.py --behavioral-exe /usr/bin/simple_switch_grpc --json out/struthio.json
+```
 
+### Nasłuchiwanie na porcie 2 switcha
+```sh
+sudo tcpdump -i s1-eth2 -w capture.pcap -v
+```
+
+### Wysłanie Packet_Out ze sterownika
+```sh
+python3 -m p4runtime_sh --grpc-addr localhost:9559 --device-id 0 --election-id 0,1 --config p4info.txt,out/struthio.json
+
+p = packet_out(payload=b'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBC', egress_port='2')
+p.send
+```

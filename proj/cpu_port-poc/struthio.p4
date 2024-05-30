@@ -84,6 +84,18 @@ parser MyParser(packet_in packet,
                 inout standard_metadata_t standard_metadata)
 {
     state start {
+        transition select(standard_metadata.ingress_port) {
+            CPU_PORT: parse_packet_out;
+            default: parse_ethernet;
+        }
+    }
+
+    state parse_packet_out {
+        packet.extract(hdr.packet_out);
+        transition parse_ethernet;
+    }
+
+    state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
             0x0800: parse_ip;
@@ -226,32 +238,41 @@ control MyIngress(inout headers_t hdr,
     }
 
     apply {
-        // Do we know this host? If not, learn it (send info to control plane)
-        tbl_mac_learn.apply();
-        // Is this ARP packet? 
-        if (hdr.ethernet.etherType == 0x0806 && hdr.arp.oper == 0x0001) {  
-            // If is is, check if it concerns us, and eventually send ARP Reply
-            tbl_arp_lookup.apply();
-        }
-        // Is this IP packet?
-        if (hdr.ethernet.etherType == 0x0800) {
-            // Check if ttl is less than 2
-            if (hdr.ip.ttl < 2) {
-                NoAction();
+        // Check if it is PacketOut P4Runtime message from controller
+        if (hdr.packet_out.isValid()) {
+            // we support only the case when egress port is specified by controller
+            // we simply set the egress port to the one specified by controller and then processing of this packet goes to MyEgress
+            standard_metadata.egress_spec = (bit<9>) hdr.packet_out.egress_port;
+        } 
+        // the other case is that it is simply the Ethertnet Packet
+        else {
+            // Do we know this host? If not, learn it (send info to control plane)
+            tbl_mac_learn.apply();
+            // Is this ARP packet? 
+            if (hdr.ethernet.etherType == 0x0806 && hdr.arp.oper == 0x0001) {  
+                // If is is, check if it concerns us, and eventually send ARP Reply
+                tbl_arp_lookup.apply();
             }
-            else {
-                // Check if this packet belongs to some multicast group 
-                // (if it does, copy and forward it to specific ports and go directly to egress block)
-                tbl_mcast_group.apply();
-                // Check if this packet is an OSPF packet
-                if (hdr.ip.protocol == OSPF_NUM) {
-                    // If it does, send it in Packet_In message to controller
-                    send_Packet_In_to_controller();
+            // Is this IP packet?
+            if (hdr.ethernet.etherType == 0x0800) {
+                // Check if ttl is less than 2
+                if (hdr.ip.ttl < 2) {
+                    NoAction();
                 }
-                // Check the next hop ip address for this packet (based on its ip.dst_addr)
-                tbl_ip_routing.apply();
-                // Set egress_port for this packet (based on next hop from previous step)
-                tbl_ip_forwarding.apply();
+                else {
+                    // Check if this packet belongs to some multicast group 
+                    // (if it does, copy and forward it to specific ports and go directly to egress block)
+                    tbl_mcast_group.apply();
+                    // Check if this packet is an OSPF packet
+                    if (hdr.ip.protocol == OSPF_NUM) {
+                        // If it does, send it in Packet_In message to controller
+                        send_Packet_In_to_controller();
+                    }
+                    // Check the next hop ip address for this packet (based on its ip.dst_addr)
+                    tbl_ip_routing.apply();
+                    // Set egress_port for this packet (based on next hop from previous step)
+                    tbl_ip_forwarding.apply();
+                }
             }
         }
     }
@@ -316,6 +337,7 @@ control MyComputeChecksum(inout headers_t hdr, inout metadata_t meta)
 control MyDeparser(packet_out packet, in headers_t hdr)
 {
     apply {
+        packet.emit(hdr.packet_in);
         packet.emit(hdr.ethernet);
         packet.emit(hdr.arp);
         packet.emit(hdr.ip);
