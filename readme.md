@@ -1,6 +1,10 @@
 # PRIN
-## Project struct
-Od lab 3 zaczyna się praca z bmv2 i P4.
+To repo przedstawia realizacje przedmiotu PRIN ("ten przedmiot o P4") w semestrze 24L.
+
+W folderach są odpowiednio labki a na koniec projekt.
+
+Projekt w przyszłości wyniosę i opiszę w oddzielnym repo, bo fajny <br>
+Jest
 
 ## Dev env setup
 Jak chcesz robic PRIN na nowej VM to [tu](dev-env-setup.md) idź.

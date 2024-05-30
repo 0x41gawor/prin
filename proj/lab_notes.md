@@ -1,5 +1,4 @@
-# OSPF
-
+# 29 maj 2024
 ## Nagłówek OSPF
 
 version zawsze 2
