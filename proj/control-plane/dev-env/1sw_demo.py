@@ -25,15 +25,15 @@ import argparse
 from time import sleep
 
 parser = argparse.ArgumentParser(description='Mininet demo')
-# parser.add_argument('--behavioral-exe', help='Path to behavioral executable',
-#                    type=str, action="store", required=True)
-# parser.add_argument('--thrift-port', help='Thrift server port for table updates',
-#                   type=int, action="store", default=9090)
+parser.add_argument('--behavioral-exe', help='Path to behavioral executable',
+                    type=str, action="store", required=True)
+parser.add_argument('--thrift-port', help='Thrift server port for table updates',
+                    type=int, action="store", default=9090)
 parser.add_argument('--num-hosts', help='Number of hosts to connect to switch',
                     type=int, action="store", default=2)
 parser.add_argument('--mode', choices=['l2', 'l3'], type=str, default='l3')
-# parser.add_argument('--json', help='Path to JSON config file',
-#                    type=str, action="store", required=True)
+parser.add_argument('--json', help='Path to JSON config file',
+                    type=str, action="store", required=True)
 parser.add_argument('--pcap-dump', help='Dump packets on interfaces to pcap files',
                     type=str, action="store", required=False, default=False)
 parser.add_argument('--enable-debugger', help='Enable debugger (Please ensure debugger support is enabled in behavioral exe, as it is disabled by default)',
@@ -49,28 +49,26 @@ class SingleSwitchTopo(Topo):
         Topo.__init__(self, **opts)
 
         switch = self.addSwitch('s1',
-                                sw_path = "/usr/bin/simple_switch_grpc",
-                                json_path = "/home/pedro/Desktop/prin/projekt/out/proj.json",
-                                thrift_port = 9090,
+                                sw_path = sw_path,
+                                json_path = json_path,
+                                thrift_port = thrift_port,
                                 pcap_dump = pcap_dump,
                                 enable_debugger = enable_debugger)
 
         for h in range(n):
             host = self.addHost('h%d' % (h + 1),
-                                ip = "10.0.%d.10/24" % h,
-                                # ip = "10.0.%d.10/24" % h,
-                                
-                                #ip = "10.0.0.%d/24" % h,
-                                mac = '88:04:00:00:00:%02x' %h)
+                                ip = "10.0.0.%d/24" % (h+1),
+                                mac = '04:04:00:00:00:%02x' %h)
             self.addLink(host, switch)
+        
 
 def main():
     num_hosts = args.num_hosts
     mode = args.mode
 
-    topo = SingleSwitchTopo("",
-                            "",
-                            "",
+    topo = SingleSwitchTopo(args.behavioral_exe,
+                            args.json,
+                            args.thrift_port,
                             args.pcap_dump,
                             args.enable_debugger,
                             num_hosts)
@@ -81,8 +79,7 @@ def main():
     net.start()
 
 
-    sw_mac = ["12:aa:bb:00:00:%02x" % n for n in range(num_hosts)]
-    print(sw_mac)
+    sw_mac = ["00:aa:bb:00:00:%02x" % n for n in range(num_hosts)]
 
     sw_addr = ["10.0.%d.1" % n for n in range(num_hosts)]
 

@@ -1,13 +1,15 @@
-Tematem projektu jest zrobienie switcha P4, który obsługuje uproszczoną na potrzeby zajęć wersję OSPF. Switch ten nazwany został Struthio i dostał swoje logo.
-
 <h1 align="center">Struthio</h1>
 
 <p align="center">
-  <img src="data-plane/mac_learning-poc/img/logo.png"/>
+  <img src="img/logo.png"/>
   <br>
   <i>Simple P4 switch with OSPF support</i>
   <br>
 </p>
+
+Tematem projektu jest zrobienie switcha P4, który obsługuje uproszczoną na potrzeby zajęć wersję OSPF. Switch ten nazwany został *Struthio*, a kompatybilny z nim sterownik to *Python Sebae*.
+
+Struthio to naukowa, łacińska nazwa na strusie (upraszczam), a jedyny wąż jaki jest w stanie je zjeść to African Rock Python, którego łacińska/naukowa nazwa to Python sebae.
 
 ## Struktura tego katalogu
 

@@ -114,7 +114,7 @@ class P4Switch(Switch):
         args = [self.sw_path]
         for port, intf in self.intfs.items():
             if not intf.IP():
-                args.extend(['-i', str(port) + "@" + intf.name])
+                args.extend(['-i', str(port) + "@"+ intf.name])
         if self.pcap_dump:
             args.append("--pcap")
             # args.append("--useFiles")
@@ -124,11 +124,8 @@ class P4Switch(Switch):
             args.extend(['--nanolog', self.nanomsg])
         args.extend(['--device-id', str(self.device_id)])
         P4Switch.device_id += 1
-        # args.append(self.json_path)
         args.append("--no-p4")
-        ####################################################################
         args.extend(["--", "--cpu-port", "510"])
-        ####################################################################
         if self.enable_debugger:
             args.append("--debugger")
         if self.log_console:
@@ -161,3 +158,4 @@ class P4Switch(Switch):
     def detach(self, intf):
         "Disconnect a data port"
         assert(0)
+ 

@@ -1,6 +1,10 @@
+import os
+os.environ['DISPLAY'] = ''
+
 from scapy.all import Ether, IP, sendp, Packet, ByteField, ShortField, IntField, XShortField, StrFixedLenField
 from scapy.packet import bind_layers
 import struct
+
 # Define checksum function
 def checksum(data):
     if len(data) % 2 == 1:
@@ -9,6 +13,7 @@ def checksum(data):
     s = (s >> 16) + (s & 0xffff)
     s += s >> 16
     return ~s & 0xffff
+
 # Define OSPF Header
 class OSPF_Hdr(Packet):
     name = "OSPF Header"
@@ -31,6 +36,7 @@ class OSPF_Hdr(Packet):
             ck = checksum(p)
             p = p[:12] + struct.pack("!H", ck) + p[14:]
         return p
+
 # Define OSPF Hello Packet
 class OSPF_Hello(Packet):
     name = "OSPF Hello"
@@ -44,19 +50,24 @@ class OSPF_Hello(Packet):
         IntField("backupdesignatedrouter", 0),
         IntField("neighbor", 0)
     ]
+
 # Bind OSPF Hello to OSPF Header
 bind_layers(OSPF_Hdr, OSPF_Hello, type=1)
+
 # Create Ethernet Layer
 eth = Ether(src="88:04:00:00:00:00", dst="12:aa:bb:00:00:01")
+
 # Create IP Layer
 ip = IP(src="10.0.0.10", dst="10.0.0.1", proto=89)
+
 # Create OSPF Header Layer
 ospf_hdr = OSPF_Hdr(routerid=0x0A00000A, areaid=0)
+
 # Create OSPF Hello Layer
 ospf_hello = OSPF_Hello(netmask=0xFFFFFF00)
+
 # Construct the full packet
 packet = eth / ip / ospf_hdr / ospf_hello
-# Display packet details
-packet.show()
+
 # Send the packet
 sendp(packet, iface="eth0")
