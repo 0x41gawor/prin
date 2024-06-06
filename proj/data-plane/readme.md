@@ -1,14 +1,3 @@
-Tematem projektu jest zrobienie switcha P4, który obsługuje uproszczoną na potrzeby zajęć wersję OSPF. Switch ten nazwany został Struthio i dostał swoje logo.
-
-<h1 align="center">Struthio</h1>
-
-<p align="center">
-  <img src="mac_learning-poc/img/logo.png"/>
-  <br>
-  <i>Simple P4 switch with OSPF support</i>
-  <br>
-</p>
-
 ## Struktura tego katalogu
 
 Wymagania na projekt są w [tym pdfie](Lab6projekt.pdf).
