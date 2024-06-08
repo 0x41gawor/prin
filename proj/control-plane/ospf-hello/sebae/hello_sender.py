@@ -60,6 +60,7 @@ class OSPF_Hello(Packet):
 # Thread of this class sends OSPF Hello message every HELLO_INT seconds
 class HelloSenderThread(threading.Thread):
     def run(self):
+        print("HelloSenderThread: started...")
         while True:
             self.send_hello()
             time.sleep(2)
@@ -84,4 +85,4 @@ class HelloSenderThread(threading.Thread):
     def send_hello(self):
         p = sh.PacketOut(payload=bytes(self.create_packet()), egress_port='2')
         p.send()
-        print("HelloSenderThread: Message sent \n")
+        print("HelloSenderThread: Message sent")

@@ -1,6 +1,6 @@
 from hello_sender import HelloSenderThread
+from sniffer import SnifferThread
 
-import threading
 import p4runtime_sh.shell as sh
 from p4runtime_sh.shell import FwdPipeConfig
 
@@ -15,15 +15,6 @@ sh.setup(
     election_id=(0, 1),
     config=FwdPipeConfig('p4info.txt','out/struthio.json')
 )
-
-
-# Thread of this class sniffs for PacketIn
-class SnifferThread(threading.Thread):
-    def run(self):
-        print("Sniffer thread started started!\n")
-        while True:
-            for msg in sh.PacketIn().sniff(timeout=5):
-                print(f"SnifferThread: PacketIn received: {msg.packet.payload} \n")
 
 if __name__ == "__main__":
 

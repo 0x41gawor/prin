@@ -20,12 +20,12 @@ class OSPF_Hdr(Packet):
     fields_desc = [
         ByteField("version", 2),
         ByteField("type", 1),
-        XShortField("packet_lenght", None),
-        IntField("router_id", 0),
-        IntField("area_id", 0),
-        XShortField("checksum", None),
-        XShortField("autype", 0),
-        StrFixedLenField("authentication", b'\x00'*8, 8)
+        XShortField("len", None),
+        IntField("routerid", 0),
+        IntField("areaid", 0),
+        XShortField("chksum", None),
+        XShortField("authtype", 0),
+        StrFixedLenField("auth", b'\x00'*8, 8)
     ]
     def post_build(self, p, pay):
         p += pay
@@ -41,13 +41,13 @@ class OSPF_Hdr(Packet):
 class OSPF_Hello(Packet):
     name = "OSPF Hello"
     fields_desc = [
-        IntField("network_mask", 0),
-        ShortField("helloInt", 10),
-        ByteField("options", 0),
-        ByteField("rtr_pri", 0),
-        IntField("deadInt", 0),
-        IntField("designated_router", 0),
-        IntField("backup_designated_router", 0),
+        IntField("netmask", 0),
+        ShortField("hellointerval", 10),
+        ByteField("options", 2),
+        ByteField("priority", 1),
+        IntField("deadinterval", 40),
+        IntField("designatedrouter", 0),
+        IntField("backupdesignatedrouter", 0),
         IntField("neighbor", 0)
     ]
 
