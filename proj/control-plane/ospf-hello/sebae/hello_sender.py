@@ -71,7 +71,7 @@ class HelloSenderThread(threading.Thread):
         # Create Ethernet Layer
         eth = Ether(src="00:00:00:00:00:00", dst="ff:ff:ff:ff:ff:ff") # switch will perform mac_update anyway
         # Create IP Layer
-        ip = IP(src="10.0.0.0", dst="224.0.0.5", proto=89)
+        ip = IP(src="10.0.0.0", dst="224.0.0.5", proto=89, ttl=1)
         # Create OSPF Header Layer
         ospf_hdr = OSPF_Hdr(router_id=0x0A00000E, area_id=0)
         # Create OSPF Hello Layer
