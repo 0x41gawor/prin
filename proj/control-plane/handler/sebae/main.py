@@ -5,8 +5,6 @@ import p4runtime_sh.shell as sh
 from p4runtime_sh.shell import FwdPipeConfig
 
 from scapy.all import *
-from scapy.layers.inet import IP
-from scapy.contrib.ospf import OSPF_Hdr, OSPF_Hello
 
 # Initialize the P4Runtime shell
 sh.setup(

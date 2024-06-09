@@ -2,14 +2,16 @@ from ospf import OSPF_Hdr, OSPF_Hello
 
 import threading
 import time
+from scapy.all import IP, ICMP, send
+
 import p4runtime_sh.shell as sh
-from scapy.all import Ether, IP, Packet, ByteField, ShortField, IntField, XShortField, StrFixedLenField
-from scapy.packet import bind_layers
 
 import os
 os.environ['DISPLAY'] = ''
 
-HELLO_INT = 10
+from scapy.all import Ether, IP, sendp, Packet, ByteField, ShortField, IntField, XShortField, StrFixedLenField
+from scapy.packet import bind_layers
+import struct
 
 # Thread of this class sends OSPF Hello message every HELLO_INT seconds
 class HelloSenderThread(threading.Thread):
@@ -17,7 +19,7 @@ class HelloSenderThread(threading.Thread):
         print("HelloSenderThread: started...")
         while True:
             self.send_hello()
-            time.sleep(HELLO_INT)
+            time.sleep(2)
 
     # Creates hello packet    
     def create_packet(self):
@@ -34,6 +36,7 @@ class HelloSenderThread(threading.Thread):
         # Construct the full packet
         packet = eth / ip / ospf_hdr / ospf_hello
         return packet
+
 
     def send_hello(self):
         p = sh.PacketOut(payload=bytes(self.create_packet()), egress_port='2')

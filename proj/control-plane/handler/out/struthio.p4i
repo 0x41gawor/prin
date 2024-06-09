@@ -1059,8 +1059,8 @@ control MyIngress(inout headers_t hdr,
 
     action send_Packet_In_to_controller() {
         standard_metadata.egress_spec = 510;
+        hdr.packet_in.setValid();
         hdr.packet_in.ingress_port = (bit<16>)standard_metadata.ingress_port;
-        hdr.packet_in.isValid();
     }
     // ------------------------------------------------------- T A B L E S 
     table tbl_mac_learn {

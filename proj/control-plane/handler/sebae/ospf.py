@@ -1,7 +1,4 @@
-import os
-os.environ['DISPLAY'] = ''
-
-from scapy.all import Ether, IP, sendp, Packet, ByteField, ShortField, IntField, XShortField, StrFixedLenField
+from scapy.all import Ether, IP, Packet, ByteField, ShortField, IntField, XShortField, StrFixedLenField
 from scapy.packet import bind_layers
 import struct
 
@@ -50,19 +47,3 @@ class OSPF_Hello(Packet):
         IntField("backup_designated_router", 0), # Not in use
         IntField("neighbor", 0)                  # Not in use
     ]
-
-# Bind OSPF Hello to OSPF Header
-bind_layers(OSPF_Hdr, OSPF_Hello, type=1)
-# Create Ethernet Layer
-eth = Ether(src="00:00:00:00:00:00", dst="ff:ff:ff:ff:ff:ff") # switch will perform mac_update anyway
-# Create IP Layer
-ip = IP(src="10.0.0.0", dst="224.0.0.5", proto=89, ttl=1)
-# Create OSPF Header Layer
-ospf_hdr = OSPF_Hdr(router_id=0x0A00000E, area_id=0)
-# Create OSPF Hello Layer
-ospf_hello = OSPF_Hello(network_mask=0x00000000, helloInt=30)
-# Construct the full packet
-packet = eth / ip / ospf_hdr / ospf_hello
-
-# Send the packet
-sendp(packet, iface="eth0")

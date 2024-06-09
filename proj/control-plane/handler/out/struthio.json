@@ -900,6 +900,21 @@
           }
         },
         {
+          "op" : "add_header",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "packet_in"
+            }
+          ],
+          "source_info" : {
+            "filename" : "struthio.p4",
+            "line" : 179,
+            "column" : 8,
+            "source_fragment" : "hdr.packet_in.setValid()"
+          }
+        },
+        {
           "op" : "assign",
           "parameters" : [
             {
@@ -926,7 +941,7 @@
           ],
           "source_info" : {
             "filename" : "struthio.p4",
-            "line" : 179,
+            "line" : 180,
             "column" : 8,
             "source_fragment" : "hdr.packet_in.ingress_port = (bit<16>)standard_metadata.ingress_port"
           }

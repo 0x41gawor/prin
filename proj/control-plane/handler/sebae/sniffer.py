@@ -10,5 +10,5 @@ class SnifferThread(threading.Thread):
         while True:
             for msg in sh.PacketIn().sniff(timeout=5):
                 print(f"SnifferThread: PacketIn received")
-                handler_thread = HandlerThread(msg.packet)
+                handler_thread = HandlerThread(msg.packet.payload)
                 handler_thread.start()
