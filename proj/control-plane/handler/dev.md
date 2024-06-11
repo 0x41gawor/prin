@@ -1,5 +1,4 @@
 # Projekt - development
-
 ## Uruchomienie sieci
 ```sh
 sudo python3 1sw_demo.py --behavioral-exe /usr/bin/simple_switch_grpc --json out/struthio.json

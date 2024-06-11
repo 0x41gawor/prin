@@ -1,4 +1,4 @@
-from scapy.all import Ether, IP, Packet, ByteField, ShortField, IntField, XShortField, StrFixedLenField
+from scapy.all import Ether, IP, Packet, ByteField, ShortField, IntField, XShortField, StrFixedLenField, FieldListField, IPField
 from scapy.packet import bind_layers
 import struct
 
@@ -18,8 +18,8 @@ class OSPF_Hdr(Packet):
         ByteField("version", 2),
         ByteField("type", 1),
         XShortField("len", None),
-        IntField("router_id", 0),
-        IntField("area_id", 0),
+        IPField("router_id", 0),
+        IPField("area_id", 0),
         XShortField("checksum", None),
         XShortField("autype", 0),
         StrFixedLenField("authentication", b'\x00'*8, 8)
@@ -38,7 +38,7 @@ class OSPF_Hdr(Packet):
 class OSPF_Hello(Packet):
     name = "OSPF Hello"
     fields_desc = [
-        IntField("network_mask", 0),
+        IPField("network_mask", 0),
         ShortField("helloInt", 30),
         ByteField("options", 0),                 # Not in use
         ByteField("rtr_pri", 0),                 # Not in use
@@ -46,4 +46,24 @@ class OSPF_Hello(Packet):
         IntField("designated_router", 0),        # Not in use
         IntField("backup_designated_router", 0), # Not in use
         IntField("neighbor", 0)                  # Not in use
+    ]
+
+# define OSFP LSA adertisment
+class OSPF_LSA(Packet):
+    name = "OSPF Link State Advertisement"
+    fields_desc = [
+        IPField("subnet", "0.0.0.0"),
+        IPField("mask", "255.255.255.0"),
+        IPField("routerid", "0.0.0.0")
+    ]
+
+# define OSFP LSU Packet
+class OSPF_LSU(Packet):
+    name = "OSPF Link State Update"
+    fields_desc = [
+        IntField("seq", 0),
+        ByteField("ttl", 1),
+        ByteField("num_adv", 1),
+        FieldListField("lsa", [], OSPF_LSA, count_from=lambda pkt: pkt.num_adv)
+        #FieldListField("lsa", [OSPF_LSA()], OSPF_LSA, count_from=lambda pkt: pkt.num_adv)
     ]
